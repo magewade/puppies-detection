@@ -1,0 +1,5 @@
+names:
+  '0': dog
+path: /Users/magewade/Desktop/ML/puppies_detection/dataset
+train: train
+val: val
