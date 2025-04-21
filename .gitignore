@@ -3,3 +3,6 @@ video/train/
 __pycache__/
 .venv
 runs/
+yolov8n.pt
+yolov8s.pt
+.DS_Store
