@@ -1,5 +1,6 @@
 dataset/
 video/train/
+video
 __pycache__/
 .venv
 runs/
