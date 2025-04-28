@@ -62,8 +62,10 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
     if start_button:
         stream_url = get_stream_info(youtube_url)
+        st.write(stream_url)
 
-        frame_width, frame_height = 1280, 720
+        # frame_width, frame_height = 1280, 720
+        frame_width, frame_height = 640, 360
         st.success(f"Стрим подключен: {frame_width}x{frame_height}")
 
         ffmpeg_cmd = [
