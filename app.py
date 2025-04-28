@@ -496,9 +496,12 @@ elif option == "Инференсим видео 🐾":
                 )
 
                 mp4_files = sorted(save_dir.glob("*.mp4"))
+                print(mp4_files)
                 if mp4_files:
                     latest = mp4_files[-1]
+                    print(latest)
                     output_path = save_dir / latest.name
+                    print(output_path)
                     st.session_state["demo_output_path"] = str(output_path)
                     st.success("Готово! 🎉")
                 else:
