@@ -95,8 +95,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
                 persist=True,
                 tracker="configs/puppy_tracker.yaml",
                 verbose=False,
-                conf=0.4,
-                save_format=None,  # Убираем сохранение файла
+                conf=0.4
             )
 
             annotated = results[0].plot() if results else frame
