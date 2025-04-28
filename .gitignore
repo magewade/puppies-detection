@@ -8,3 +8,4 @@ yolov8n.pt
 yolov8s.pt
 .DS_Store
 preprocess
+inferenced_video

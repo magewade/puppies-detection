@@ -29,7 +29,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     st.subheader("Инференс YouTube трансляции 🎥")
 
     st.info(
-        "Это прямая трансляция, так что щенки могут устраивать совсем уж инфернальный хаос, спать или быть не в кадре :)"
+        "Это прямая трансляция, щенки могут устраивать совсем уж инфернальный хаос, спать или быть не в кадре :)"
     )
 
     st.video("https://www.youtube.com/watch?v=bYlEgU2tU5w")
@@ -89,7 +89,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
             frame = frame.reshape((frame_height, frame_width, 3))
             results = model.track(
-                source=frame, persist=True, tracker="configs/puppy_tracker.yaml", verbose=False
+                source=frame, persist=True, tracker="configs/puppy_tracker.yaml", verbose=False, conf=0.4
             )
 
             annotated = results[0].plot() if results else frame
@@ -206,6 +206,7 @@ elif option == "Инференсим видео 🐾":
                     project=str(demo_output_dir),
                     name=unique_name,
                     exist_ok=True,
+                    conf=0.4
                 )
 
                 # После инференса находим новое видео
@@ -269,6 +270,7 @@ elif option == "Инференсим видео 🐾":
                     project=uploaded_output_dir,
                     name="detect",
                     exist_ok=True,
+                    conf=0.4
                 )
                 latest = sorted((uploaded_output_dir / "detect").glob("*.mp4"))[-1]
                 output_path = output_dir / f"annotated_uploaded_{uuid.uuid4().hex}.mp4"
