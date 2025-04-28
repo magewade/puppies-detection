@@ -36,7 +36,8 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     def get_stream_info(youtube_url):
         ydl_opts = {
             "quiet": True,
-            "format": "best[ext=mp4]/best",
+            "format": "best",
+            "noplaylist": True,  # если хотите только один ролик
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
