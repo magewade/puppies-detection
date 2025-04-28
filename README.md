@@ -82,9 +82,9 @@ project-root/
 
 ## ❤️ Автор
 
+Милые щеночки — [Explore Dogs](https://www.youtube.com/watch?v=bYlEgU2tU5w)
 
-[Милые щеночки — ](https://github.com/magewade)[Explore Dogs](https://www.youtube.com/watch?v=bYlEgU2tU5w) [
-Библиотека YOLOv8 — ](https://github.com/magewade)[Ultralytics](https://github.com/ultralytics)
+Библиотека YOLOv8 — [Ultralytics](https://github.com/ultralytics)
 
 Разработка — [@magewade](https://github.com/magewade)
 
