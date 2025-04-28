@@ -71,7 +71,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         ffmpeg_cmd = [
             "ffmpeg",
             "-i",
-            stream_url,
+            youtube_url,  # просто ссылка на YouTube видео
             "-vf",
             f"scale={frame_width}:{frame_height}",
             "-f",
@@ -84,6 +84,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             "quiet",
             "-",
         ]
+
         pipe = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
 
         frame_size = frame_width * frame_height * 3
