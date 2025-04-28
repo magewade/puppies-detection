@@ -32,29 +32,26 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     )
 
     st.video("https://www.youtube.com/watch?v=bYlEgU2tU5w")
-    
+
     def list_formats(youtube_url):
         ydl_opts = {"quiet": True}
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
-            formats = info.get('formats', [])
+            formats = info.get("formats", [])
             for f in formats:
                 print(f"{f['format_id']} - {f['ext']} - {f.get('format_note', '')}")
-                
 
     list_formats("https://www.youtube.com/watch?v=bYlEgU2tU5w")
-
 
     def get_stream_info(youtube_url):
         ydl_opts = {
             "quiet": True,
             "format": "233",
-            "noplaylist": True,  # если хотите только один ролик
+            "noplaylist": True,
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
             return info["url"]
-
 
     st.info(
         "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает каждый кадр"
@@ -66,7 +63,6 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     if start_button:
         stream_url = get_stream_info(youtube_url)
 
-        # 🔧 Фиксированный размер
         frame_width, frame_height = 1280, 720
         st.success(f"Стрим подключен: {frame_width}x{frame_height}")
 
@@ -90,9 +86,18 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
         frame_size = frame_width * frame_height * 3
         placeholder = st.empty()
-        stop_button = st.button("⛔ Остановить")
 
-        while not stop_button:
+        # Цикл обработки кадров с возможностью остановки
+        while True:
+            stop_button = st.button("⛔ Остановить")
+            if stop_button:
+                st.info("Остановка инференса...")
+                break
+
+            if pipe.poll() is not None:
+                st.warning("🚫 Процесс ffmpeg завершился")
+                break
+
             raw_frame = pipe.stdout.read(frame_size)
             if not raw_frame:
                 st.warning("🚫 Поток завершён или прерван")
@@ -103,12 +108,13 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
                 continue
 
             frame = frame.reshape((frame_height, frame_width, 3))
+
             results = model.track(
                 source=frame,
                 persist=True,
                 tracker="configs/puppy_tracker.yaml",
                 verbose=False,
-                conf=0.4
+                conf=0.4,
             )
 
             annotated = results[0].plot() if results else frame
