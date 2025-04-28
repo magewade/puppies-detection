@@ -43,6 +43,19 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
     list_formats("https://www.youtube.com/watch?v=bYlEgU2tU5w")
 
+
+    #TODO тут нужно разоюраться почему не идет поток видео
+    
+    def list_formats(youtube_url):
+        ydl_opts = {"quiet": True}
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(youtube_url, download=False)
+            formats = info.get('formats', [])
+            for f in formats:
+                print(f"{f['format_id']} - {f['ext']} - {f.get('format_note', '')}")
+
+    list_formats("https://www.youtube.com/watch?v=bYlEgU2tU5w")
+
     def get_stream_info(youtube_url):
         ydl_opts = {
             "quiet": True,
@@ -71,7 +84,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         ffmpeg_cmd = [
             "ffmpeg",
             "-i",
-            youtube_url,  # просто ссылка на YouTube видео
+            stream_url,  
             "-vf",
             f"scale={frame_width}:{frame_height}",
             "-f",
