@@ -41,7 +41,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             for f in formats:
                 print(f"{f['format_id']} - {f['ext']} - {f.get('format_note', '')}")
 
-    st.info(list_formats("https://www.youtube.com/watch?v=bYlEgU2tU5w"))
+    st.warning(list_formats("https://www.youtube.com/watch?v=bYlEgU2tU5w"))
 
 
     #TODO тут нужно разоюраться почему не идет поток видео
