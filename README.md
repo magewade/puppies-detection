@@ -1,102 +1,93 @@
-
-# 🐶 YOLOv8 + FastAPI + Streamlit: Детекция щенков на видео
+# 🐶 YOLOv8 + Streamlit: Детекция щенков на видео
 
 [![Made with Streamlit](https://img.shields.io/badge/Made%20with-Streamlit-ff4b4b?logo=streamlit&logoColor=white)](https://streamlit.io/)
 [![Powered by Ultralytics YOLOv8](https://img.shields.io/badge/Powered%20by-YOLOv8-blue?logo=github)](https://github.com/ultralytics/ultralytics)
-[![Run in Colab](https://img.shields.io/badge/Run%20in-Google%20Colab-yellow?logo=googlecolab)](https://colab.research.google.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
 ---
 
-> Этот проект демонстрирует, как с помощью YOLOv8 и FastAPI на Google Colab обрабатывать видео и отображать результаты через интерфейс Streamlit — быстро, удобно и красиво.
+> Этот проект показывает, как с помощью **YOLOv8** и **Streamlit** можно удобно обрабатывать видео локально: находить щенков на кадрах и визуализировать результат через простой и красивый интерфейс.
 
 ---
 
 ## 📸 Превью
 
 <p align="center">
-  <img src="preview.gif" alt="Demo" width="640"/>
+  <img src="data/images/Untitled_V1-0001.gif" alt="Demo" width="640"/>
 </p>
 
-*(анимация или скриншот аннотированного видео, можно заменить на свой `preview.gif`)*
+---
+
+## 📦 Технологии проекта
+
+- **[YOLOv8](https://docs.ultralytics.com/)** — детекция и трекинг объектов на видео
+- **[Streamlit](https://streamlit.io/)** — быстрый веб-интерфейс для взаимодействия с пользователем
 
 ---
 
-## 📦 Стек технологий
+## 🚀 Как запустить проект
 
-- **[YOLOv8](https://docs.ultralytics.com/)** — детекция объектов на видео
-- **[FastAPI](https://fastapi.tiangolo.com/)** — API-сервер на Colab
-- **[ngrok](https://ngrok.com/)** — проброс сервера из Colab наружу
-- **[Streamlit](https://streamlit.io/)** — лёгкий фронтенд для пользователей
-
----
-
-## 🚀 Быстрый старт
-
-### 1. 🧠 Обучите или возьмите свою YOLOv8 модель
-
-> Файл `best.pt` должен находиться в директории проекта или загружаться в Colab.
-
----
-
-### 2. 📡 Запустите FastAPI сервер на Colab
-
-- Открой [Colab Notebook](colab_yolo_api.ipynb)
-- Загрузите туда свою модель YOLO
-- Запустите сервер и получите ссылку ngrok
-
----
-
-### 3. 🌐 Запустите Streamlit-клиент
-
-Установи зависимости и запусти интерфейс:
+### 1. Установите зависимости
 
 ```bash
 pip install -r requirements.txt
+```
+
+### 2. Запустите приложение Streamlit
+
+```bash
 streamlit run app.py
 ```
 
+---
 
 ## 🗂 Структура проекта
 
 ```bash
 project-root/
-├── app.py                 # Streamlit клиент
-├── requirements.txt       # Зависимости
-├── README.md              # Документация (этот файл)
-└── colab_yolo_api.ipynb   # FastAPI сервер на Colab
+├── app.py                      # Основной код приложения Streamlit
+├── notebooks/                  # Все ноутбуки с исследованиями и обучением
+│   ├── 1_Research.ipynb   
+│   ├── 2_Model_Training.ipynb  
+│   └── 3_Inference.ipynb       # Проверка инференса стрима и футажей
+├── configs/                    # Конфигурационные файлы, например трекер
+│   └── puppy_tracker.yaml  
+├── requirements.txt            # Список зависимостей
+├── README.md                   # Документация проекта
+├── LICENSE                     # Лицензия MIT
+├── data/                       # Папки с ресурсами проекта
+│   ├── examples/               # Футажи для инференса
+│   ├── images/                 # Гифки и иллюстрации
+├── weights/                    # Веса модели
+└── inferenced_videos/          # Папка для готовых видео с трекингом
 ```
-
-
-
-## 📹 Как работает
-
-1. Пользователь загружает видео через Streamlit
-2. Видео отправляется на FastAPI сервер в Colab
-3. YOLOv8 выполняет инференс и сохраняет аннотированное видео
-4. Streamlit получает результат и отображает его
-
-## ⚠️ Ограничения
-
-- Colab "засыпает" через ~90 минут
-- Ngrok URL временный (можно автоматизировать)
-- Обработка длинных видео может занимать значительное время
 
 ---
 
-## 💡 Идеи для развития
+## 📹 Как это работает
 
-- Прогресс-бар инференса
-- Поддержка изображений и batch-инференса
-- Загрузка модели из интерфейса
-- Постобработка результатов YOLO (например, фильтрация по классам)
+1. Пользователь выбирает демо-видео, трансляцию или загружает своё.
+2. Модель **YOLOv8** выполняет инференс.
+3. Полученное аннотированное видео отображается в интерфейсе Streamlit.
+4. Готовый результат можно скачать одним кликом.
+
+---
+
+## ⚡ Особенности проекта
+
+- Детекция и трекинг щенков в реальном времени
+- Возможность скачать аннотированное видео
+- Красивая визуализация результатов через гифки
 
 ---
 
 ## ❤️ Автор
 
-Разработка и милашки — [@you](https://github.com/yourusername)
-YOLOv8 — [Ultralytics](https://github.com/ultralytics)
+
+[Милые щеночки — ](https://github.com/magewade)[Explore Dogs](https://www.youtube.com/watch?v=bYlEgU2tU5w) [
+Библиотека YOLOv8 — ](https://github.com/magewade)[Ultralytics](https://github.com/ultralytics)
+
+Разработка — [@magewade](https://github.com/magewade)
 
 ---
 
