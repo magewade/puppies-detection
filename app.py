@@ -291,7 +291,6 @@
 #             )
 
 
-
 import streamlit as st
 from ultralytics import YOLO
 from pathlib import Path
@@ -572,6 +571,38 @@ elif option == "Инференсим видео 🐾":
                 else:
                     st.error("Ошибка: не найдено видео после инференса.")
 
+    # Инференс для загруженного видео
+    if "uploaded_video_path" in st.session_state:
+        uploaded_video_path = st.session_state["uploaded_video_path"]
+
+        if st.button("🚀 Запустить инференс", key="run_uploaded_inference"):
+            with st.spinner("Считаем щеночков..."):
+                results = model.track(
+                    source=uploaded_video_path,
+                    tracker="configs/puppy_tracker.yaml",
+                    save=True,
+                    save_txt=False,
+                    project=uploaded_output_dir,
+                    name="detect",
+                    exist_ok=True,
+                    conf=0.4,
+                )
+                # Ищем видео с расширением mp4 или avi
+                video_files = sorted(
+                    (uploaded_output_dir / "detect").glob("*.mp4")
+                ) + sorted((uploaded_output_dir / "detect").glob("*.avi"))
+                if video_files:
+                    latest = video_files[-1]
+                    output_path = (
+                        output_dir
+                        / f"annotated_uploaded_{uuid.uuid4().hex}{latest.suffix}"
+                    )
+                    shutil.copy(latest, output_path)
+                    st.session_state["uploaded_output_path"] = str(output_path)
+                    st.success(f"Готово! 🎉 Видео найдено: {latest.name}")
+                else:
+                    st.error("Ошибка: не найдено видео после инференса.")
+
     # Показ результата инференса для загруженного видео
     if "uploaded_output_path" in st.session_state:
         output_path = st.session_state["uploaded_output_path"]
@@ -579,3 +610,8 @@ elif option == "Инференсим видео 🐾":
         with open(output_path, "rb") as f:
             st.download_button(
                 label="📥 Скачать видео (загруженное)",
+                data=f,
+                file_name=Path(output_path).name,
+                mime="video/mp4" if output_path.endswith(".mp4") else "video/avi",
+                key="download_uploaded_video",
+            )
