@@ -495,7 +495,7 @@ elif option == "Инференсим видео 🐾":
                     conf=0.4,
                 )
 
-                mp4_files = sorted(save_dir.glob("*.mp4"))
+                mp4_files = sorted(demo_output_dir.glob("*.mp4"))
                 st.info(mp4_files)
                 if mp4_files:
                     latest = mp4_files[-1]
