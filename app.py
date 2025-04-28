@@ -436,7 +436,7 @@ elif option == "Как это работает 🔎":
 
 elif option == "Инференсим видео 🐾":
 
-    output_dir = Path("inferenced_videos")
+    output_dir = Path("/mount/src/puppies-detection/inferenced_videos")
     output_dir.mkdir(parents=True, exist_ok=True)
 
     def clear_folder(folder: Path):
