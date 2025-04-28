@@ -301,6 +301,7 @@ import yt_dlp
 import subprocess
 import numpy as np
 import time
+import os
 
 
 # Загрузка модели — путь к твоим весам
@@ -494,8 +495,11 @@ elif option == "Инференсим видео 🐾":
                     exist_ok=True,
                     conf=0.4,
                 )
-
-                mp4_files = sorted(save_dir.glob("*.mp4"))
+                
+                for root, dirs, files in os.walk(save_dir):
+                    st.info(f"В папке {root} найдены файлы: {files}")
+                    
+                mp4_files = sorted(save_dir.rglob("*.mp4"))
                 st.info(save_dir)
                 if mp4_files:
                     latest = mp4_files[-1]
