@@ -32,6 +32,18 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     )
 
     st.video("https://www.youtube.com/watch?v=bYlEgU2tU5w")
+    
+    def list_formats(youtube_url):
+        ydl_opts = {"quiet": True}
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(youtube_url, download=False)
+            formats = info.get('formats', [])
+            for f in formats:
+                print(f"{f['format_id']} - {f['ext']} - {f.get('format_note', '')}")
+                
+
+    list_formats("https://www.youtube.com/watch?v=bYlEgU2tU5w")
+
 
     def get_stream_info(youtube_url):
         ydl_opts = {
@@ -42,6 +54,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
             return info["url"]
+
 
     st.info(
         "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает каждый кадр"
