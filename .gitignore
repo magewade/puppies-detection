@@ -1,11 +1,11 @@
 dataset/
 video/train/
-video
+video/
 __pycache__/
 .venv
 runs/
 yolov8n.pt
 yolov8s.pt
 .DS_Store
-preprocess
-inferenced_video
+preprocess/
+inferenced_video/
