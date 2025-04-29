@@ -172,7 +172,7 @@ elif option == "Как это работает 🔎":
         st.image(
             "data/images/animation_V1-0003.gif",
             caption="Куча-мала, быстрые изменения и хаос 🐕",
-            use_container_width=True=True,
+            use_container_width=True,
         )
 
         st.image(
