@@ -43,13 +43,13 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
     # 233 - mp4 - Default, low
     # 234 - mp4 - Default, high
-    # 269 - mp4 - 
-    # 229 - mp4 - 
-    # 230 - mp4 - 
-    # 231 - mp4 - 
-    # 232 - mp4 - 
+    # 269 - mp4 -
+    # 229 - mp4 -
+    # 230 - mp4 -
+    # 231 - mp4 -
+    # 232 - mp4 -
     # 270 - mp4 -
-    
+
     def get_stream_info(youtube_url):
         ydl_opts = {
             "quiet": True,
@@ -61,11 +61,11 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             return info["url"]
 
     st.info(
-        "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает каждый кадр, и инференс идет на мощностях Streamlit"
+        "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает каждый кадр на CPU Streamlit"
     )
 
     youtube_url = "https://www.youtube.com/watch?v=bYlEgU2tU5w"
-    start_button = st.button("▶️ Начать инференс")
+    start_button = st.button("▶️ Начать инференс", key="start_button")
 
     if start_button:
         stream_url = get_stream_info(youtube_url)
@@ -99,7 +99,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
         # Цикл обработки кадров с возможностью остановки
         while True:
-            stop_button = st.button("⛔ Остановить")
+            stop_button = st.button("⛔ Остановить", key="stop_button")
             if stop_button:
                 st.info("Остановка инференса...")
                 break
@@ -361,5 +361,3 @@ elif option == "Инференсим видео 🐾":
                 mime="video/mp4",
                 key="download_uploaded_video",
             )
-
-
