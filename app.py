@@ -113,11 +113,6 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
                 st.info("Остановка инференса...")
                 break
 
-            # Check if the process (ffmpeg) has been stopped
-            if pipe.poll() is not None:
-                st.warning("🚫 Процесс ffmpeg завершился")
-                break
-
             # If the stop button has been clicked (via session state), break the loop
             if st.session_state.stop_button_clicked:
                 st.info("Остановка инференса...")
