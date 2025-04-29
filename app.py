@@ -53,7 +53,24 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     #     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
     #         info = ydl.extract_info(youtube_url, download=False)
     #         return info["url"]
-    
+
+    def check_stream_availability(stream_url):
+        # Проверяем доступность потока с помощью ffmpeg
+        ffmpeg_cmd = [
+            "ffmpeg", 
+            "-i", stream_url,
+            "-t", "5",  # Ограничим время проверки 5 секундами
+            "-f", "null",  # Не сохраняем видео
+            "-"
+        ]
+
+        process = subprocess.Popen(ffmpeg_cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+        stderr = process.communicate()[1]
+
+        if "error" in stderr.decode().lower():
+            print(f"Ошибка при подключении к потоку: {stderr.decode()}")
+            return False
+        return True
 
     def get_stream_info(youtube_url):
         ydl_opts = {
@@ -88,6 +105,11 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     stream_url = get_stream_info(youtube_url)
     print(f"URL потока: {stream_url}")
 
+    # Пример использования
+    if check_stream_availability(stream_url):
+        print(f"Поток доступен: {stream_url}")
+    else:
+        print(f"Поток недоступен или завершён.")
 
     st.info(
         "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает каждый кадр"
