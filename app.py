@@ -54,7 +54,6 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     #         info = ydl.extract_info(youtube_url, download=False)
     #         return info["url"]
     
-    import yt_dlp
 
     def get_stream_info(youtube_url):
         ydl_opts = {
@@ -72,8 +71,10 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
                 if 'url' in f:
                     # Проверяем, поддерживает ли формат стриминг (например, HLS или DASH)
                     if f.get('format_note') and 'live' in f.get('format_note').lower():
-                        return f['url']
-            
+                        stream_url = f['url']
+                        if stream_url.endswith('m3u8'):
+                            return stream_url  # Возвращаем URL для HLS
+
             # Если поток не найден, ищем URL с наилучшим качеством
             best_format = next((f['url'] for f in formats if f.get('ext') == 'mp4'), None)
 
