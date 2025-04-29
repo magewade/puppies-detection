@@ -105,7 +105,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         # Цикл обработки кадров с возможностью остановки
         while True:
             # Create the stop button only once
-            stop_button = st.button("⛔ Остановить", key="stop_button")
+            stop_button = st.button("⛔ Остановить", key="stop_btn")
 
             # If the stop button is clicked, update the session state
             if stop_button:
