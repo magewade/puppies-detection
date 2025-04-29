@@ -98,13 +98,29 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         placeholder = st.empty()
 
         # Цикл обработки кадров с возможностью остановки
+        # Check if stop button has already been created in session state
+        if 'stop_button_clicked' not in st.session_state:
+            st.session_state.stop_button_clicked = False
+
+        # Цикл обработки кадров с возможностью остановки
         while True:
-            stop_button = st.button("⛔ Остановить", key=f"stop_button_{time.time()}")
+            # Create the stop button only once
+            stop_button = st.button("⛔ Остановить", key="stop_button")
+
+            # If the stop button is clicked, update the session state
             if stop_button:
+                st.session_state.stop_button_clicked = True
                 st.info("Остановка инференса...")
                 break
+
+            # Check if the process (ffmpeg) has been stopped
             if pipe.poll() is not None:
                 st.warning("🚫 Процесс ffmpeg завершился")
+                break
+
+            # If the stop button has been clicked (via session state), break the loop
+            if st.session_state.stop_button_clicked:
+                st.info("Остановка инференса...")
                 break
 
             raw_frame = pipe.stdout.read(frame_size)
@@ -132,6 +148,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             time.sleep(0.1)
 
         pipe.terminate()
+
 
 
 
