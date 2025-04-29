@@ -165,7 +165,7 @@ elif option == "Как это работает 🔎":
         time.sleep(2)  # задержка для эффекта
 
     st.image(
-        "data/images/Untitled_V1-0002.gif",
+        "data/images/animation_V1-0002.gif",
         caption="Немного щеночков 🐕‍🦺",
         use_container_width=True,
     )
