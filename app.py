@@ -104,7 +104,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
                         f"scale={frame_width}:{frame_height}",
                         "-f",
                         "image2pipe",
-                        "-pix_fmt",
+                        "-http_persistent 0", "-pix_fmt",
                         "bgr24",
                         "-vcodec",
                         "rawvideo",
