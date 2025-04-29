@@ -24,14 +24,6 @@ option = st.radio(
 )
 
 
-# TODO
-
-import yt_dlp
-import subprocess
-import time
-import numpy as np
-import streamlit as st
-
 if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     st.subheader("Инференс YouTube трансляции 🎥")
 
@@ -41,127 +33,100 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
     st.video("https://www.youtube.com/watch?v=bYlEgU2tU5w")
 
-    youtube_url = "https://www.youtube.com/watch?v=bYlEgU2tU5w"
-
-    def get_stream_info(youtube_url):
-        ydl_opts = {
-            "quiet": True,
-            "noplaylist": True,
-            "format": "best[ext=mp4]/best/233/234",
-        }
-
+    def list_formats(youtube_url):
+        ydl_opts = {"quiet": True}
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
             formats = info.get("formats", [])
-
             for f in formats:
-                if "url" in f and f.get("format_note", "").lower().find("live") != -1:
-                    if f["url"].endswith("m3u8"):
-                        return f["url"]
+                print(f"{f['format_id']} - {f['ext']} - {f.get('format_note', '')}")
 
-            # запасной вариант — mp4 поток
-            best_format = next(
-                (f["url"] for f in formats if f.get("ext") == "mp4"), None
-            )
-            return best_format
+    st.warning(list_formats("https://www.youtube.com/watch?v=bYlEgU2tU5w"))
 
-    def check_stream_availability(stream_url):
-        ffmpeg_cmd = ["ffmpeg", "-i", stream_url, "-t", "5", "-f", "null", "-"]
-        process = subprocess.Popen(
-            ffmpeg_cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE
-        )
-        _, stderr = process.communicate()
-        ffmpeg_log = stderr.decode()
-        is_available = "error" not in ffmpeg_log.lower()
-        return is_available, ffmpeg_log
+    # TODO тут нужно разоюраться почему не идет поток видео
+    def get_stream_info(youtube_url):
+        ydl_opts = {
+            "quiet": True,
+            "format": "234",
+            "noplaylist": True,
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(youtube_url, download=False)
+            return info["url"]
 
+    st.info(
+        "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает каждый кадр"
+    )
+
+    youtube_url = "https://www.youtube.com/watch?v=bYlEgU2tU5w"
     start_button = st.button("▶️ Начать инференс")
-    stop_button = st.empty()  # Кнопка для остановки процесса
 
     if start_button:
-        try:
-            stream_url = get_stream_info(youtube_url)
-            if not stream_url:
-                st.error("❌ Не удалось получить прямой поток с YouTube.")
-            else:
-                is_available, ffmpeg_log = check_stream_availability(stream_url)
+        stream_url = get_stream_info(youtube_url)
+        st.write(stream_url)
 
-                if not is_available:
-                    st.error("🚫 Поток недоступен или завершён. Попробуйте позже.")
-                    with st.expander("Посмотреть лог ffmpeg"):
-                        st.code(ffmpeg_log, language="bash")
-                else:
-                    st.success("✅ Поток доступен. Запускаем инференс...")
+        # frame_width, frame_height = 1280, 720
+        frame_width, frame_height = 640, 360
+        st.success(f"Стрим подключен: {frame_width}x{frame_height}")
 
-                    frame_width, frame_height = 640, 360
-                    st.success(f"Стрим подключен: {frame_width}x{frame_height}")
+        ffmpeg_cmd = [
+            "ffmpeg",
+            "-i",
+            stream_url,
+            "-vf",
+            f"scale={frame_width}:{frame_height}",
+            "-f",
+            "image2pipe",
+            "-pix_fmt",
+            "bgr24",
+            "-vcodec",
+            "rawvideo",
+            "-loglevel",
+            "quiet",
+            "-",
+        ]
 
-                    ffmpeg_cmd = [
-                        "ffmpeg",
-                        "-i",
-                        stream_url,
-                        "-vf",
-                        f"scale={frame_width}:{frame_height}",
-                        "-f",
-                        "image2pipe",
-                        "-http_persistent 0", "-pix_fmt",
-                        "bgr24",
-                        "-vcodec",
-                        "rawvideo",
-                        "-loglevel",
-                        "quiet",
-                        "-",
-                    ]
+        pipe = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
 
-                    pipe = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
+        frame_size = frame_width * frame_height * 3
+        placeholder = st.empty()
 
-                    frame_size = frame_width * frame_height * 3
-                    placeholder = st.empty()
+        # Цикл обработки кадров с возможностью остановки
+        while True:
+            stop_button = st.button("⛔ Остановить")
+            if stop_button:
+                st.info("Остановка инференса...")
+                break
 
-                    while True:
-                        stop_button = st.button("⛔ Остановить")
-                        if stop_button:
-                            st.info("Остановка инференса...")
-                            pipe.terminate()  # Останавливаем поток
-                            break
+            if pipe.poll() is not None:
+                st.warning("🚫 Процесс ffmpeg завершился")
+                break
 
-                        if pipe.poll() is not None:
-                            st.warning("🚫 Процесс ffmpeg завершился")
-                            break
+            raw_frame = pipe.stdout.read(frame_size)
+            if not raw_frame:
+                st.warning("🚫 Поток завершён или прерван")
+                break
 
-                        raw_frame = pipe.stdout.read(frame_size)
-                        if not raw_frame:
-                            st.warning("🚫 Поток завершён или прерван")
-                            break
+            frame = np.frombuffer(raw_frame, dtype=np.uint8)
+            if frame.size != frame_size:
+                continue
 
-                        frame = np.frombuffer(raw_frame, dtype=np.uint8)
-                        if frame.size != frame_size:
-                            continue
+            frame = frame.reshape((frame_height, frame_width, 3))
 
-                        frame = frame.reshape((frame_height, frame_width, 3))
+            results = model.track(
+                source=frame,
+                persist=True,
+                tracker="configs/puppy_tracker.yaml",
+                verbose=False,
+                conf=0.4,
+            )
 
-                        results = model.track(
-                            source=frame,
-                            persist=True,
-                            tracker="configs/puppy_tracker.yaml",
-                            verbose=False,
-                            conf=0.4,
-                        )
+            annotated = results[0].plot() if results else frame
+            placeholder.image(annotated, channels="BGR", use_container_width=True)
 
-                        annotated = results[0].plot() if results else frame
-                        placeholder.image(
-                            annotated, channels="BGR", use_container_width=True
-                        )
+            time.sleep(0.1)
 
-                        time.sleep(0.1)
-
-                    pipe.terminate()
-
-        except Exception as e:
-            st.error(f"Ошибка при подключении или инференсе: {e}")
-
-
-# TODO
+        pipe.terminate()
 
 
 elif option == "Как это работает 🔎":
