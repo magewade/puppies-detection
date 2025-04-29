@@ -22,7 +22,7 @@ option = st.radio(
         "Инференсим трансляцию с YouTube 🐕‍🦺",
     ),
 )
-
+# TODO
 
 if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     st.subheader("Инференс YouTube трансляции 🎥")
@@ -33,20 +33,10 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
     st.video("https://www.youtube.com/watch?v=bYlEgU2tU5w")
 
-    def list_formats(youtube_url):
-        ydl_opts = {"quiet": True}
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(youtube_url, download=False)
-            formats = info.get("formats", [])
-            for f in formats:
-                print(f"{f['format_id']} - {f['ext']} - {f.get('format_note', '')}")
-
-    st.warning(list_formats("https://www.youtube.com/watch?v=bYlEgU2tU5w"))
-
     def get_stream_info(youtube_url):
         ydl_opts = {
             "quiet": True,
-            "format": "234",  # Лучше выбрать формат с mp4, если получится
+            "format": "234",  # можно адаптировать при необходимости
             "noplaylist": True,
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -62,43 +52,73 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
     if start_button:
         stream_url = get_stream_info(youtube_url)
-        st.write("URL видеопотока:", stream_url)
+        st.write(f"🔗 Stream URL: {stream_url}")
 
-        cap = cv2.VideoCapture(stream_url)
-        if not cap.isOpened():
-            st.error("🚫 Не удалось открыть видеопоток")
-        else:
-            st.success("✅ Видеопоток открыт")
+        frame_width, frame_height = 640, 360
+        st.success(f"Стрим подключен: {frame_width}x{frame_height}")
 
-            placeholder = st.empty()
+        ffmpeg_cmd = [
+            "ffmpeg",
+            "-i",
+            stream_url,
+            "-vf",
+            f"scale={frame_width}:{frame_height}",
+            "-f",
+            "image2pipe",
+            "-pix_fmt",
+            "bgr24",
+            "-vcodec",
+            "rawvideo",
+            "-loglevel",
+            "quiet",
+            "-",
+        ]
 
-            while True:
-                stop_button = st.button("⛔ Остановить")
-                if stop_button:
-                    st.info("Остановка инференса...")
-                    break
+        pipe = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
+        frame_size = frame_width * frame_height * 3
+        placeholder = st.empty()
 
-                ret, frame = cap.read()
-                if not ret:
-                    st.warning("🚫 Не удалось получить кадр из потока")
-                    break
+        stop = False
 
-                results = model.track(
-                    source=frame,
-                    persist=True,
-                    tracker="configs/puppy_tracker.yaml",
-                    verbose=False,
-                    conf=0.4,
-                )
+        while not stop:
+            stop_button = st.button("⛔ Остановить")
+            if stop_button:
+                st.info("Остановка инференса...")
+                stop = True
+                break
 
-                annotated = results[0].plot() if results else frame
-                placeholder.image(annotated, channels="BGR", use_container_width=True)
+            if pipe.poll() is not None:
+                st.warning("🚫 Процесс ffmpeg завершился")
+                break
 
-                time.sleep(0.1)
+            raw_frame = pipe.stdout.read(frame_size)
+            if not raw_frame:
+                st.warning("🚫 Поток завершён или прерван")
+                break
 
-            cap.release()
+            frame = np.frombuffer(raw_frame, dtype=np.uint8)
+            if frame.size != frame_size:
+                continue
+
+            frame = frame.reshape((frame_height, frame_width, 3))
+
+            results = model.track(
+                source=frame,
+                persist=True,
+                tracker="configs/puppy_tracker.yaml",
+                verbose=False,
+                conf=0.4,
+            )
+
+            annotated = results[0].plot() if results else frame
+            placeholder.image(annotated, channels="BGR", use_container_width=True)
+
+            time.sleep(0.1)
+
+        pipe.terminate()
 
 
+# TODO
 elif option == "Как это работает 🔎":
     st.subheader("Как работает модель 🚀")
 
