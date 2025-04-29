@@ -406,7 +406,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         list_formats(youtube_url)
         ydl_opts = {
             "quiet": True,
-            "format": "best",  # Use the best available format
+            "format": "270",  # Use the best available format
             "noplaylist": True,
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
