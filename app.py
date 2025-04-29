@@ -26,6 +26,12 @@ option = st.radio(
 
 # TODO
 
+import yt_dlp
+import subprocess
+import time
+import numpy as np
+import streamlit as st
+
 if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     st.subheader("Инференс YouTube трансляции 🎥")
 
@@ -70,6 +76,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         return is_available, ffmpeg_log
 
     start_button = st.button("▶️ Начать инференс")
+    stop_button = st.empty()  # Кнопка для остановки процесса
 
     if start_button:
         try:
@@ -115,6 +122,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
                         stop_button = st.button("⛔ Остановить")
                         if stop_button:
                             st.info("Остановка инференса...")
+                            pipe.terminate()  # Останавливаем поток
                             break
 
                         if pipe.poll() is not None:
