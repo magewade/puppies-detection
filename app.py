@@ -47,7 +47,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     def get_stream_info(youtube_url):
         ydl_opts = {
             "quiet": True,
-            "format": "234",
+            # "format": "233",
             "noplaylist": True,
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
