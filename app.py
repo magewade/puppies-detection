@@ -162,7 +162,8 @@ elif option == "Как это работает 🔎":
     st.markdown("Вот как это выглядит в действии:")
 
     with st.spinner("Загружаем гифки..."):
-
+        st.markdown("Вот как это выглядит в действии:")
+        
         st.image(
             "data/images/Untitled_V1-0001.gif",
             caption="Беготня и обычные щеночьи дела 🐶",
@@ -180,8 +181,6 @@ elif option == "Как это работает 🔎":
             caption="Выход из кадра, движение и появление новых объектов 🐾",
             use_container_width=True,
         )
-
-
 
     st.info("Модель: YOLOv8, трекер: BoT-SORT, обучение на кастомной выборке")
 
