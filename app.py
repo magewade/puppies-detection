@@ -25,57 +25,22 @@ option = st.radio(
 # TODO
 
 
-def get_available_formats(youtube_url):
-    ydl_opts = {
-        "quiet": True,
-        "format": "best",
-        "noplaylist": True,
-    }
-
-    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        info = ydl.extract_info(youtube_url, download=False)
-        formats = info.get("formats", [])
-
-        # Собираем список доступных форматов для selectbox
-        format_list = []
-        for f in formats:
-            format_info = (
-                f"{f['format_id']} - {f.get('ext', '')} - {f.get('format_note', '')}"
-            )
-            format_list.append(
-                (format_info, f["url"])
-            )  # Добавляем кортеж (описание, URL)
-
-        return format_list
-
-
 # Пример использования с Streamlit
 youtube_url = "https://www.youtube.com/watch?v=bYlEgU2tU5w"
 
-formats = get_available_formats(youtube_url)
-
-# Выбираем формат из списка
-selected_format_description, selected_url = st.selectbox(
-    "Выберите формат видео:",
-    formats,
-    format_func=lambda x: x[0],  # Показываем только описание, скрываем URL
-)
-
-# Показываем информацию о выбранном формате
-st.write(f"Вы выбрали: {selected_format_description}")
 
 # Инферируем трансляцию
 start_button = st.button("▶️ Начать инференс")
 
 if start_button:
-    st.write(f"URL выбранного потока: {selected_url}")
+    st.write(f"URL выбранного потока: {youtube_url}")
     frame_width, frame_height = 640, 360
     st.success(f"Стрим подключен: {frame_width}x{frame_height}")
 
     ffmpeg_cmd = [
         "ffmpeg",
         "-i",
-        selected_url,  # Используем выбранный URL
+        youtube_url,  # Используем выбранный URL
         "-vf",
         f"scale={frame_width}:{frame_height}",
         "-f",
