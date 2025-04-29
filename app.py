@@ -44,15 +44,49 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     st.warning(list_formats("https://www.youtube.com/watch?v=bYlEgU2tU5w"))
 
     # TODO тут нужно разоюраться почему не идет поток видео
+    # def get_stream_info(youtube_url):
+    #     ydl_opts = {
+    #         "quiet": True,
+    #         "format": "best",
+    #         "noplaylist": True,
+    #     }
+    #     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+    #         info = ydl.extract_info(youtube_url, download=False)
+    #         return info["url"]
+    
+    import yt_dlp
+
     def get_stream_info(youtube_url):
         ydl_opts = {
             "quiet": True,
-            "format": "best",
             "noplaylist": True,
         }
+
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
-            return info["url"]
+            formats = info.get("formats", [])
+
+            # Перебираем доступные форматы и выбираем поток
+            for f in formats:
+                # Пытаемся найти ссылку на поток
+                if 'url' in f:
+                    # Проверяем, поддерживает ли формат стриминг (например, HLS или DASH)
+                    if f.get('format_note') and 'live' in f.get('format_note').lower():
+                        return f['url']
+            
+            # Если поток не найден, ищем URL с наилучшим качеством
+            best_format = next((f['url'] for f in formats if f.get('ext') == 'mp4'), None)
+
+            if best_format:
+                return best_format
+
+        raise ValueError("Не удалось найти подходящий поток для видео.")
+
+    # Пример использования
+    youtube_url = "https://www.youtube.com/watch?v=bYlEgU2tU5w"
+    stream_url = get_stream_info(youtube_url)
+    print(f"URL потока: {stream_url}")
+
 
     st.info(
         "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает каждый кадр"
