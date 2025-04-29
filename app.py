@@ -99,11 +99,10 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
         # Цикл обработки кадров с возможностью остановки
         while True:
-            stop_button = st.button("⛔ Остановить", key="stop_button")
+            stop_button = st.button("⛔ Остановить", key=f"stop_button_{time.time()}")
             if stop_button:
                 st.info("Остановка инференса...")
                 break
-
             if pipe.poll() is not None:
                 st.warning("🚫 Процесс ffmpeg завершился")
                 break
@@ -133,6 +132,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             time.sleep(0.1)
 
         pipe.terminate()
+
 
 
 elif option == "Как это работает 🔎":
