@@ -161,20 +161,38 @@ elif option == "Как это работает 🔎":
 
     st.markdown("Вот как это выглядит в действии:")
 
+    # st.image(
+    #     "data/images/Untitled_V1-0001.gif",
+    #     caption="Беготня и обычные щеночьи дела 🐶",
+    #     use_container_width=True,
+    # )
+
+    # st.image(
+    #     "data/images/animation_V1-0003.gif",
+    #     caption="Куча-мала, быстрые изменения и хаос 🐕",
+    #     use_container_width=True,
+    # )
+
+    # st.image(
+    #     "data/images/animation_V1-0004.gif",
+    #     caption="Выход из кадра, движение и появление новых объектов 🐾",
+    #     use_container_width=True,
+    # )
+
     st.image(
-        "data/images/Untitled_V1-0001.gif",
+        "https://i.imgur.com/RVxmQHm.gif",
         caption="Беготня и обычные щеночьи дела 🐶",
         use_container_width=True,
     )
 
     st.image(
-        "data/images/animation_V1-0003.gif",
+        "https://i.imgur.com/3R5NphD.gif",
         caption="Куча-мала, быстрые изменения и хаос 🐕",
         use_container_width=True,
     )
 
     st.image(
-        "data/images/animation_V1-0004.gif",
+        "https://i.imgur.com/rKvrozy.gif",
         caption="Выход из кадра, движение и появление новых объектов 🐾",
         use_container_width=True,
     )
