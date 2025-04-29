@@ -43,12 +43,10 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
     st.warning(list_formats("https://www.youtube.com/watch?v=bYlEgU2tU5w"))
 
-
-    #TODO тут нужно разоюраться почему не идет поток видео
     def get_stream_info(youtube_url):
         ydl_opts = {
             "quiet": True,
-            "format": "234",
+            "format": "234",  # Лучше выбрать формат с mp4, если получится
             "noplaylist": True,
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -64,70 +62,41 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
     if start_button:
         stream_url = get_stream_info(youtube_url)
-        st.write(stream_url)
+        st.write("URL видеопотока:", stream_url)
 
-        # frame_width, frame_height = 1280, 720
-        frame_width, frame_height = 640, 360
-        st.success(f"Стрим подключен: {frame_width}x{frame_height}")
+        cap = cv2.VideoCapture(stream_url)
+        if not cap.isOpened():
+            st.error("🚫 Не удалось открыть видеопоток")
+        else:
+            st.success("✅ Видеопоток открыт")
 
-        ffmpeg_cmd = [
-            "ffmpeg",
-            "-i",
-            stream_url,  
-            "-vf",
-            f"scale={frame_width}:{frame_height}",
-            "-f",
-            "image2pipe",
-            "-pix_fmt",
-            "bgr24",
-            "-vcodec",
-            "rawvideo",
-            "-loglevel",
-            "quiet",
-            "-",
-        ]
+            placeholder = st.empty()
 
-        pipe = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
+            while True:
+                stop_button = st.button("⛔ Остановить")
+                if stop_button:
+                    st.info("Остановка инференса...")
+                    break
 
-        frame_size = frame_width * frame_height * 3
-        placeholder = st.empty()
+                ret, frame = cap.read()
+                if not ret:
+                    st.warning("🚫 Не удалось получить кадр из потока")
+                    break
 
-        # Цикл обработки кадров с возможностью остановки
-        while True:
-            stop_button = st.button("⛔ Остановить")
-            if stop_button:
-                st.info("Остановка инференса...")
-                break
+                results = model.track(
+                    source=frame,
+                    persist=True,
+                    tracker="configs/puppy_tracker.yaml",
+                    verbose=False,
+                    conf=0.4,
+                )
 
-            if pipe.poll() is not None:
-                st.warning("🚫 Процесс ffmpeg завершился")
-                break
+                annotated = results[0].plot() if results else frame
+                placeholder.image(annotated, channels="BGR", use_container_width=True)
 
-            raw_frame = pipe.stdout.read(frame_size)
-            if not raw_frame:
-                st.warning("🚫 Поток завершён или прерван")
-                break
+                time.sleep(0.1)
 
-            frame = np.frombuffer(raw_frame, dtype=np.uint8)
-            if frame.size != frame_size:
-                continue
-
-            frame = frame.reshape((frame_height, frame_width, 3))
-
-            results = model.track(
-                source=frame,
-                persist=True,
-                tracker="configs/puppy_tracker.yaml",
-                verbose=False,
-                conf=0.4,
-            )
-
-            annotated = results[0].plot() if results else frame
-            placeholder.image(annotated, channels="BGR", use_container_width=True)
-
-            time.sleep(0.1)
-
-        pipe.terminate()
+            cap.release()
 
 
 elif option == "Как это работает 🔎":
@@ -136,7 +105,7 @@ elif option == "Как это работает 🔎":
     st.markdown(
         """
     **YOLOv8** — нейросетевая модель для детекции и трекинга объектов на видео.
-    Она способна быстро и точно находить собачек на кадрах и отслеживать их перемещение в реальном времени.
+    Она способна находить собачек на кадрах и отслеживать их перемещение в реальном времени.
 
     Для обучения модели я вручную разметила около пятисот кадров с изображениями щенков, указав точные позиции каждого животного.
     Благодаря этому модель научилась самостоятельно выявлять и отслеживать собак на новых видео. Однако стоит помнить, что модели семейства YOLO чувствительны к изменениям формы отслеживаемых объектов.

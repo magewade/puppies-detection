@@ -4,6 +4,8 @@
 [![Powered by Ultralytics YOLOv8](https://img.shields.io/badge/Powered%20by-YOLOv8-blue?logo=github)](https://github.com/ultralytics/ultralytics)
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
+[Streamlit https://puppies-detection.streamlit.app](https://puppies-detection.streamlit.app)
+
 ---
 
 > Этот проект показывает, как с помощью **YOLOv8** и **Streamlit** можно удобно обрабатывать видео локально: находить щенков на кадрах и визуализировать результат через простой и красивый интерфейс.
