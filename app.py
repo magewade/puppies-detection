@@ -41,12 +41,19 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             for f in formats:
                 print(f"{f['format_id']} - {f['ext']} - {f.get('format_note', '')}")
 
-    st.warning(list_formats("https://www.youtube.com/watch?v=bYlEgU2tU5w"))
-
+    # 233 - mp4 - Default, low
+    # 234 - mp4 - Default, high
+    # 269 - mp4 - 
+    # 229 - mp4 - 
+    # 230 - mp4 - 
+    # 231 - mp4 - 
+    # 232 - mp4 - 
+    # 270 - mp4 -
+    
     def get_stream_info(youtube_url):
         ydl_opts = {
             "quiet": True,
-            "format": "270",
+            "format": "232",
             "noplaylist": True,
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
