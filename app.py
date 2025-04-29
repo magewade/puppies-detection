@@ -27,35 +27,37 @@ option = st.radio(
 if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     st.subheader("Инференс YouTube трансляции 🎥")
 
-    st.info(
-        "Это прямая трансляция, щенки могут устраивать совсем уж инфернальный хаос, спать или быть не в кадре :)"
-    )
+    st.info("Это прямая трансляция, щенки могут спать или быть не в кадре :)")
 
     st.video("https://www.youtube.com/watch?v=bYlEgU2tU5w")
 
-    def get_stream_info(youtube_url):
+    def get_hls_url(youtube_url):
         ydl_opts = {
             "quiet": True,
-            "format": "234",  # можно адаптировать при необходимости
+            "format": "best",  # Можно заменить на itag, если хочешь жёстко задать
             "noplaylist": True,
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
-            return info["url"]
-
-    st.info(
-        "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает каждый кадр"
-    )
+            formats = info.get("formats", [])
+            for f in formats:
+                if f.get("protocol") == "m3u8":
+                    return f["url"]
+            raise Exception("HLS (m3u8) формат не найден")
 
     youtube_url = "https://www.youtube.com/watch?v=bYlEgU2tU5w"
     start_button = st.button("▶️ Начать инференс")
 
     if start_button:
-        stream_url = get_stream_info(youtube_url)
-        st.write(f"🔗 Stream URL: {stream_url}")
+        try:
+            stream_url = get_hls_url(youtube_url)
+        except Exception as e:
+            st.error(f"Не удалось получить HLS ссылку: {e}")
+            st.stop()
 
         frame_width, frame_height = 640, 360
         st.success(f"Стрим подключен: {frame_width}x{frame_height}")
+        st.write(f"🔗 HLS URL: {stream_url}")
 
         ffmpeg_cmd = [
             "ffmpeg",
@@ -79,7 +81,6 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         placeholder = st.empty()
 
         stop = False
-
         while not stop:
             stop_button = st.button("⛔ Остановить")
             if stop_button:
@@ -88,7 +89,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
                 break
 
             if pipe.poll() is not None:
-                st.warning("🚫 Процесс ffmpeg завершился")
+                st.warning("🚫 ffmpeg завершился")
                 break
 
             raw_frame = pipe.stdout.read(frame_size)
