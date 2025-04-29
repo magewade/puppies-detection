@@ -22,81 +22,113 @@ option = st.radio(
         "Инференсим трансляцию с YouTube 🐕‍🦺",
     ),
 )
-# TODO
 
 
-# Пример использования с Streamlit
-youtube_url = "https://www.youtube.com/watch?v=bYlEgU2tU5w"
+if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
+    st.subheader("Инференс YouTube трансляции 🎥")
+
+    st.info(
+        "Это прямая трансляция, щенки могут устраивать совсем уж инфернальный хаос, спать или быть не в кадре :)"
+    )
+
+    st.video("https://www.youtube.com/watch?v=bYlEgU2tU5w")
+
+    def list_formats(youtube_url):
+        ydl_opts = {"quiet": True}
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(youtube_url, download=False)
+            formats = info.get("formats", [])
+            for f in formats:
+                print(f"{f['format_id']} - {f['ext']} - {f.get('format_note', '')}")
+
+    st.warning(list_formats("https://www.youtube.com/watch?v=bYlEgU2tU5w"))
+
+    # TODO тут нужно разоюраться почему не идет поток видео
+    def get_stream_info(youtube_url):
+        ydl_opts = {
+            "quiet": True,
+            "format": "234",
+            "noplaylist": True,
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(youtube_url, download=False)
+            return info["url"]
+
+    st.info(
+        "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает каждый кадр"
+    )
+
+    youtube_url = "https://www.youtube.com/watch?v=bYlEgU2tU5w"
+    start_button = st.button("▶️ Начать инференс")
+
+    if start_button:
+        stream_url = get_stream_info(youtube_url)
+        st.write(stream_url)
+
+        # frame_width, frame_height = 1280, 720
+        frame_width, frame_height = 640, 360
+        st.success(f"Стрим подключен: {frame_width}x{frame_height}")
+
+        ffmpeg_cmd = [
+            "ffmpeg",
+            "-i",
+            stream_url,
+            "-vf",
+            f"scale={frame_width}:{frame_height}",
+            "-f",
+            "image2pipe",
+            "-pix_fmt",
+            "bgr24",
+            "-vcodec",
+            "rawvideo",
+            "-loglevel",
+            "quiet",
+            "-",
+        ]
+
+        pipe = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
+
+        frame_size = frame_width * frame_height * 3
+        placeholder = st.empty()
+
+        # Цикл обработки кадров с возможностью остановки
+        while True:
+            stop_button = st.button("⛔ Остановить")
+            if stop_button:
+                st.info("Остановка инференса...")
+                break
+
+            if pipe.poll() is not None:
+                st.warning("🚫 Процесс ffmpeg завершился")
+                break
+
+            raw_frame = pipe.stdout.read(frame_size)
+            if not raw_frame:
+                st.warning("🚫 Поток завершён или прерван")
+                break
+
+            frame = np.frombuffer(raw_frame, dtype=np.uint8)
+            if frame.size != frame_size:
+                continue
+
+            frame = frame.reshape((frame_height, frame_width, 3))
+
+            results = model.track(
+                source=frame,
+                persist=True,
+                tracker="configs/puppy_tracker.yaml",
+                verbose=False,
+                conf=0.4,
+            )
+
+            annotated = results[0].plot() if results else frame
+            placeholder.image(annotated, channels="BGR", use_container_width=True)
+
+            time.sleep(0.1)
+
+        pipe.terminate()
 
 
-# Инферируем трансляцию
-start_button = st.button("▶️ Начать инференс")
-
-if start_button:
-    st.write(f"URL выбранного потока: {youtube_url}")
-    frame_width, frame_height = 640, 360
-    st.success(f"Стрим подключен: {frame_width}x{frame_height}")
-
-    ffmpeg_cmd = [
-        "ffmpeg",
-        "-i",
-        youtube_url,  # Используем выбранный URL
-        "-vf",
-        f"scale={frame_width}:{frame_height}",
-        "-f",
-        "image2pipe",
-        "-pix_fmt",
-        "bgr24",
-        "-vcodec",
-        "rawvideo",
-        "-loglevel",
-        "quiet",
-        "-",
-    ]
-
-    pipe = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
-
-    frame_size = frame_width * frame_height * 3
-    placeholder = st.empty()
-
-    while True:
-        stop_button = st.button("⛔ Остановить")
-        if stop_button:
-            st.info("Остановка инференса...")
-            break
-
-        if pipe.poll() is not None:
-            st.warning("🚫 Процесс ffmpeg завершился")
-            break
-
-        raw_frame = pipe.stdout.read(frame_size)
-        if not raw_frame:
-            st.warning("🚫 Поток завершён или прерван")
-            break
-
-        frame = np.frombuffer(raw_frame, dtype=np.uint8)
-        if frame.size != frame_size:
-            continue
-
-        frame = frame.reshape((frame_height, frame_width, 3))
-
-        results = model.track(
-            source=frame,
-            persist=True,
-            tracker="configs/puppy_tracker.yaml",
-            verbose=False,
-            conf=0.4,
-        )
-
-        annotated = results[0].plot() if results else frame
-        placeholder.image(annotated, channels="BGR", use_container_width=True)
-
-        time.sleep(0.1)
-
-    pipe.terminate()
-
-
-# TODO
 elif option == "Как это работает 🔎":
     st.subheader("Как работает модель 🚀")
 
