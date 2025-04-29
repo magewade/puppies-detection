@@ -421,62 +421,62 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     start_button = st.button("▶️ Начать инференс")
 
     if start_button:
-    stream_url = get_stream_info(youtube_url)
-    st.write(stream_url)
+        stream_url = get_stream_info(youtube_url)
+        st.write(stream_url)
 
-    # frame_width, frame_height = 1280, 720
-    frame_width, frame_height = 640, 360
-    st.success(f"Стрим подключен: {frame_width}x{frame_height}")
+        # frame_width, frame_height = 1280, 720
+        frame_width, frame_height = 640, 360
+        st.success(f"Стрим подключен: {frame_width}x{frame_height}")
 
-    ffmpeg_cmd = [
-        "ffmpeg",
-        "-i",
-        stream_url,
-        "-c:v",
-        "libx264",
-        "-vf",
-        f"scale={frame_width}:{frame_height}",
-        "-f",
-        "image2pipe",
-        "-pix_fmt",
-        "bgr24",
-        "-vcodec",
-        "rawvideo",
-        "-loglevel",
-        "quiet",
-        "-",
-    ]
+        ffmpeg_cmd = [
+            "ffmpeg",
+            "-i",
+            stream_url,
+            "-c:v",
+            "libx264",
+            "-vf",
+            f"scale={frame_width}:{frame_height}",
+            "-f",
+            "image2pipe",
+            "-pix_fmt",
+            "bgr24",
+            "-vcodec",
+            "rawvideo",
+            "-loglevel",
+            "quiet",
+            "-",
+        ]
 
-    pipe = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
+        pipe = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
 
-    frame_size = frame_width * frame_height * 3
-    placeholder = st.empty()
+        frame_size = frame_width * frame_height * 3
+        placeholder = st.empty()
 
-    while True:
-        raw_frame = pipe.stdout.read(frame_size)
-        if not raw_frame:
-            break
+        while True:
+            raw_frame = pipe.stdout.read(frame_size)
+            if not raw_frame:
+                break
 
-        frame = np.frombuffer(raw_frame, dtype=np.uint8)
-        if frame.size != frame_size:
-            continue
+            frame = np.frombuffer(raw_frame, dtype=np.uint8)
+            if frame.size != frame_size:
+                continue
 
-        frame = frame.reshape((frame_height, frame_width, 3))
+            frame = frame.reshape((frame_height, frame_width, 3))
 
-        results = model.track(
-            source=frame,
-            persist=True,
-            tracker="configs/puppy_tracker.yaml",
-            verbose=False,
-            conf=0.4,
-        )
+            results = model.track(
+                source=frame,
+                persist=True,
+                tracker="configs/puppy_tracker.yaml",
+                verbose=False,
+                conf=0.4,
+            )
 
-        annotated = results[0].plot() if results else frame
-        placeholder.image(annotated, channels="BGR", use_container_width=True)
+            annotated = results[0].plot() if results else frame
+            placeholder.image(annotated, channels="BGR", use_container_width=True)
 
-        time.sleep(0.1)
+            time.sleep(0.1)
 
-    pipe.terminate()
+        pipe.terminate()
 
 
 elif option == "Как это работает 🔎":
