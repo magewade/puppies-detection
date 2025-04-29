@@ -24,99 +24,111 @@ option = st.radio(
 )
 # TODO
 
-if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
-    st.subheader("Инференс YouTube трансляции 🎥")
 
-    st.info("Это прямая трансляция, щенки могут спать или быть не в кадре :)")
+def get_available_formats(youtube_url):
+    ydl_opts = {
+        "quiet": True,
+        "format": "best",
+        "noplaylist": True,
+    }
 
-    st.video("https://www.youtube.com/watch?v=bYlEgU2tU5w")
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(youtube_url, download=False)
+        formats = info.get("formats", [])
 
-    def get_hls_url(youtube_url):
-        ydl_opts = {
-            "quiet": True,
-            "format": "best",  # Можно заменить на itag, если хочешь жёстко задать
-            "noplaylist": True,
-        }
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(youtube_url, download=False)
-            formats = info.get("formats", [])
-            for f in formats:
-                if f.get("protocol") == "m3u8":
-                    return f["url"]
-            raise Exception("HLS (m3u8) формат не найден")
-
-    youtube_url = "https://www.youtube.com/watch?v=bYlEgU2tU5w"
-    start_button = st.button("▶️ Начать инференс")
-
-    if start_button:
-        try:
-            stream_url = get_hls_url(youtube_url)
-        except Exception as e:
-            st.error(f"Не удалось получить HLS ссылку: {e}")
-            st.stop()
-
-        frame_width, frame_height = 640, 360
-        st.success(f"Стрим подключен: {frame_width}x{frame_height}")
-        st.write(f"🔗 HLS URL: {stream_url}")
-
-        ffmpeg_cmd = [
-            "ffmpeg",
-            "-i",
-            stream_url,
-            "-vf",
-            f"scale={frame_width}:{frame_height}",
-            "-f",
-            "image2pipe",
-            "-pix_fmt",
-            "bgr24",
-            "-vcodec",
-            "rawvideo",
-            "-loglevel",
-            "quiet",
-            "-",
-        ]
-
-        pipe = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
-        frame_size = frame_width * frame_height * 3
-        placeholder = st.empty()
-
-        stop = False
-        while not stop:
-            stop_button = st.button("⛔ Остановить")
-            if stop_button:
-                st.info("Остановка инференса...")
-                stop = True
-                break
-
-            if pipe.poll() is not None:
-                st.warning("🚫 ffmpeg завершился")
-                break
-
-            raw_frame = pipe.stdout.read(frame_size)
-            if not raw_frame:
-                st.warning("🚫 Поток завершён или прерван")
-                break
-
-            frame = np.frombuffer(raw_frame, dtype=np.uint8)
-            if frame.size != frame_size:
-                continue
-
-            frame = frame.reshape((frame_height, frame_width, 3))
-
-            results = model.track(
-                source=frame,
-                persist=True,
-                tracker="configs/puppy_tracker.yaml",
-                verbose=False,
-                conf=0.4,
+        # Собираем список доступных форматов для selectbox
+        format_list = []
+        for f in formats:
+            format_info = (
+                f"{f['format_id']} - {f.get('ext', '')} - {f.get('format_note', '')}"
             )
+            format_list.append(
+                (format_info, f["url"])
+            )  # Добавляем кортеж (описание, URL)
 
-            annotated = results[0].plot() if results else frame
-            placeholder.image(annotated, channels="BGR", use_container_width=True)
+        return format_list
 
-            time.sleep(0.1)
 
-        pipe.terminate()
+# Пример использования с Streamlit
+youtube_url = "https://www.youtube.com/watch?v=bYlEgU2tU5w"
+
+formats = get_available_formats(youtube_url)
+
+# Выбираем формат из списка
+selected_format_description, selected_url = st.selectbox(
+    "Выберите формат видео:",
+    formats,
+    format_func=lambda x: x[0],  # Показываем только описание, скрываем URL
+)
+
+# Показываем информацию о выбранном формате
+st.write(f"Вы выбрали: {selected_format_description}")
+
+# Инферируем трансляцию
+start_button = st.button("▶️ Начать инференс")
+
+if start_button:
+    st.write(f"URL выбранного потока: {selected_url}")
+    frame_width, frame_height = 640, 360
+    st.success(f"Стрим подключен: {frame_width}x{frame_height}")
+
+    ffmpeg_cmd = [
+        "ffmpeg",
+        "-i",
+        selected_url,  # Используем выбранный URL
+        "-vf",
+        f"scale={frame_width}:{frame_height}",
+        "-f",
+        "image2pipe",
+        "-pix_fmt",
+        "bgr24",
+        "-vcodec",
+        "rawvideo",
+        "-loglevel",
+        "quiet",
+        "-",
+    ]
+
+    pipe = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
+
+    frame_size = frame_width * frame_height * 3
+    placeholder = st.empty()
+
+    while True:
+        stop_button = st.button("⛔ Остановить")
+        if stop_button:
+            st.info("Остановка инференса...")
+            break
+
+        if pipe.poll() is not None:
+            st.warning("🚫 Процесс ffmpeg завершился")
+            break
+
+        raw_frame = pipe.stdout.read(frame_size)
+        if not raw_frame:
+            st.warning("🚫 Поток завершён или прерван")
+            break
+
+        frame = np.frombuffer(raw_frame, dtype=np.uint8)
+        if frame.size != frame_size:
+            continue
+
+        frame = frame.reshape((frame_height, frame_width, 3))
+
+        results = model.track(
+            source=frame,
+            persist=True,
+            tracker="configs/puppy_tracker.yaml",
+            verbose=False,
+            conf=0.4,
+        )
+
+        annotated = results[0].plot() if results else frame
+        placeholder.image(annotated, channels="BGR", use_container_width=True)
+
+        time.sleep(0.1)
+
+    pipe.terminate()
 
 
 # TODO
