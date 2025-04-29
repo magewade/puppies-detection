@@ -382,6 +382,8 @@ option = st.radio(
     ),
 )
 
+#TODO
+
 
 if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     st.subheader("Инференс YouTube трансляции 🎥")
@@ -400,18 +402,19 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             for f in formats:
                 print(f"{f['format_id']} - {f['ext']} - {f.get('format_note', '')}")
 
-    st.warning(list_formats("https://www.youtube.com/watch?v=bYlEgU2tU5w"))
-
-    # TODO тут нужно разоюраться почему не идет поток видео
     def get_stream_info(youtube_url):
+        list_formats(youtube_url)
         ydl_opts = {
             "quiet": True,
-            "format": "235",
+            "format": "best",  # Use the best available format
             "noplaylist": True,
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
             return info["url"]
+
+    youtube_url = "https://www.youtube.com/watch?v=bYlEgU2tU5w"
+    stream_url = get_stream_info(youtube_url)
 
     st.info(
         "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает каждый кадр"
