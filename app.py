@@ -40,12 +40,6 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             info = ydl.extract_info(youtube_url, download=False)
             return info["url"]
 
-    # Функция для отображения видео из потока
-    def stream_video_hls(stream_url):
-        reader = imageio.get_reader(stream_url, "ffmpeg")
-        for frame in reader:
-            yield frame
-
     # Выбираем формат видео
     def list_formats(youtube_url):
         ydl_opts = {"quiet": True}
@@ -85,9 +79,6 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     match = re.search(r"(\d+)x(\d+)", selected_format_label)
     if match:
         frame_width, frame_height = int(match.group(1)), int(match.group(2))
-        st.info(
-            f"📐 Извлечены размеры из выбранного формата: {frame_width}x{frame_height}, {selected_format_id}"
-        )
     else:
         st.warning(f"⚠️ Не удалось извлечь размеры из строки '{selected_format_label}', используем значения по умолчанию")
         frame_width, frame_height = 640, 360
@@ -106,7 +97,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             st.error("❌ Не удалось получить ссылку на поток.")
             st.stop()
 
-        st.success(f"✅ Стрим подключен\nРазмеры (по данным): {frame_width}x{frame_height}")
+        st.success(f"✅ Стрим подключен: {frame_width}x{frame_height}")
         st.code(stream_url, language="bash")
 
         # Инференс потока
@@ -118,6 +109,17 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
         stop_button = st.button("⛔ Остановить", key="stop_button")
 
+        cap = cv2.VideoCapture(stream_url)
+
+        if not cap.isOpened():
+            st.error("🚫 Не удалось открыть поток. Возможно, он завершён или нестабилен.")
+            st.stop()
+
+        # Попробуем получить реальные размеры
+        actual_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)) or frame_width
+        actual_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) or frame_height
+        st.info(f"📺 Детектировано: {actual_width}x{actual_height}")
+
         while True:
             if stop_button:
                 st.session_state.stop_button_clicked = True
@@ -127,22 +129,21 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             if st.session_state.stop_button_clicked:
                 break
 
-            # Используем imageio для захвата кадров из потока
-            try:
-                for frame in stream_video_hls(stream_url):
-                    # Преобразуем размер под модель, если нужно
-                    frame = imageio.core.util.Array(frame)  # Преобразуем в формат, поддерживаемый OpenCV
-
-                    # Отображение обработанного кадра
-                    placeholder.image(frame, channels="RGB", use_container_width=True)
-
-                    # Добавляем задержку для предотвращения излишней нагрузки
-                    time.sleep(0.1)
-
-            except Exception as e:
-                st.error(f"Ошибка при обработке потока: {e}")
+            ret, frame = cap.read()
+            if not ret or frame is None:
+                st.warning("🚫 Поток завершён или прерван")
                 break
 
+            # Преобразуем размер под модель, если нужно
+            frame = cv2.resize(frame, (frame_width, frame_height))
+
+            # Отображение обработанного кадра
+            placeholder.image(frame, channels="BGR", use_container_width=True)
+
+            # Добавляем задержку для предотвращения излишней нагрузки
+            time.sleep(0.1)
+
+        cap.release()
 
 # TODO
 
