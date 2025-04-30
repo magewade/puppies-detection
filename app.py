@@ -59,11 +59,13 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         options=available_formats,
         format_func=lambda x: x[0],  # показываем читабельную подпись
     )
-    
+
     match = re.search(r"(\d+)x(\d+)", selected_format_label)
     if match:
         frame_width, frame_height = int(match.group(1)), int(match.group(2))
-        st.info(f"📐 Извлечены размеры из выбранного формата: {frame_width}x{frame_height}")
+        st.info(
+            f"📐 Извлечены размеры из выбранного формата: {frame_width}x{frame_height}, {selected_format_id}"
+        )
     else:
         st.warning(f"⚠️ Не удалось извлечь размеры из строки '{selected_format_label}', используем значения по умолчанию")
         frame_width, frame_height = 640, 360
@@ -91,7 +93,6 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             st.stop()
 
         st.success(f"✅ Стрим подключен\n📺 Ссылка на поток: {stream_url}\n📐 Размеры: {frame_width}x{frame_height}")
-
 
         ffmpeg_cmd = [
             "ffmpeg",
