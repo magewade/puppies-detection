@@ -37,6 +37,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
     st.video("https://www.youtube.com/watch?v=bYlEgU2tU5w")
 
+    # Выбираем формат видео
     def list_formats(youtube_url):
         ydl_opts = {"quiet": True}
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -67,15 +68,13 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     match = re.search(r"(\d+)x(\d+)", selected_format_label)
     if match:
         frame_width, frame_height = int(match.group(1)), int(match.group(2))
-        st.info(
-            f"📐 Извлечены размеры из выбранного формата: {frame_width}x{frame_height}, {selected_format_id}"
-        )
     else:
         st.warning(
             f"⚠️ Не удалось извлечь размеры из строки '{selected_format_label}', используем значения по умолчанию"
         )
         frame_width, frame_height = 640, 360
 
+    # Устанавливаем параметры для получения потока
     def get_stream_info(youtube_url, format_id):
         ydl_opts = {
             "quiet": True,
@@ -86,6 +85,36 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             info = ydl.extract_info(youtube_url, download=False)
             return info["url"]
 
+    # Настройка интерфейса Streamlit
+    st.subheader("Инференс YouTube трансляции 🎥")
+    st.info(
+        "Это прямая трансляция, щенки могут устраивать совсем уж инфернальный хаос, спать или быть не в кадре :)"
+    )
+
+    st.video("https://www.youtube.com/watch?v=bYlEgU2tU5w")
+
+    # Доступные форматы видео с YouTube
+    youtube_url = "https://www.youtube.com/watch?v=bYlEgU2tU5w"
+    available_formats = list_formats(youtube_url)
+
+    selected_format_label, selected_format_id = st.selectbox(
+        "Выбери формат видео для инференса",
+        options=available_formats,
+        format_func=lambda x: x[0],  # показываем читабельную подпись
+    )
+
+    # Получаем размеры из выбранного формата
+    match = re.search(r"(\d+)x(\d+)", selected_format_label)
+    if match:
+        frame_width, frame_height = int(match.group(1)), int(match.group(2))
+        st.info(
+            f"📐 Извлечены размеры из выбранного формата: {frame_width}x{frame_height}, {selected_format_id}"
+        )
+    else:
+        st.warning(f"⚠️ Не удалось извлечь размеры из строки '{selected_format_label}', используем значения по умолчанию")
+        frame_width, frame_height = 640, 360
+
+    # Инференс потока
     st.info(
         "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает каждый кадр на CPU Streamlit"
     )
@@ -93,61 +122,58 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     start_button = st.button("▶️ Начать инференс", key="start_button")
 
     if start_button:
+        # Получаем ссылку на поток
         stream_url = get_stream_info(youtube_url, selected_format_id)
         if not stream_url:
             st.error("❌ Не удалось получить ссылку на поток.")
             st.stop()
 
-        st.success(
-            f"✅ Стрим подключен\nРазмеры (по данным): {frame_width}x{frame_height}"
-        )
-        st.code(stream_url, language="bash")
+        st.success(f"✅ Стрим подключен: {frame_width}x{frame_height}")
+
+        cap = cv2.VideoCapture(stream_url)
+
+        if not cap.isOpened():
+            st.error("🚫 Не удалось открыть поток. Возможно, он завершён или нестабилен.")
+            st.stop()
+
+        # Попробуем получить реальные размеры
+        actual_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)) or frame_width
+        actual_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) or frame_height
+        st.info(f"📺 Детектировано: {actual_width}x{actual_height}")
 
         placeholder = st.empty()
-        st.session_state.stop_button_clicked = False
+
+        # Кнопка остановки
+        if "stop_button_clicked" not in st.session_state:
+            st.session_state.stop_button_clicked = False
 
         stop_button = st.button("⛔ Остановить", key="stop_button")
 
-        def stream_with_imageio(
-            stream_url, model, frame_width, frame_height, placeholder
-        ):
-            try:
-                for frame in iio.imiter(stream_url, plugin="ffmpeg"):
-                    frame_resized = cv2.resize(frame, (frame_width, frame_height))
-
-                    results = model.track(
-                        source=frame_resized,
-                        persist=True,
-                        tracker="configs/puppy_tracker.yaml",
-                        verbose=False,
-                        conf=0.4,
-                    )
-
-                    annotated = results[0].plot() if results else frame_resized
-                    placeholder.image(
-                        annotated, channels="BGR", use_container_width=True
-                    )
-
-                    if st.session_state.stop_button_clicked:
-                        break
-
-            except Exception as e:
-                st.error(f"❌ Ошибка при чтении потока: {e}")
-
-        thread = threading.Thread(
-            target=stream_with_imageio,
-            args=(stream_url, model, frame_width, frame_height, placeholder),
-        )
-        thread.start()
-
-        while thread.is_alive():
+        while True:
             if stop_button:
                 st.session_state.stop_button_clicked = True
                 st.info("⛔ Остановка инференса...")
                 break
+
+            if st.session_state.stop_button_clicked:
+                break
+
+            ret, frame = cap.read()
+            if not ret or frame is None:
+                st.warning("🚫 Поток завершён или прерван")
+                break
+
+            # Преобразуем размер под модель, если нужно
+            frame = cv2.resize(frame, (frame_width, frame_height))
+
+            # Отображение обработанного кадра
+            placeholder.image(frame, channels="BGR", use_container_width=True)
+
+            # Добавляем задержку для предотвращения излишней нагрузки
             time.sleep(0.1)
 
-        thread.join()
+        cap.release()
+
 
 # TODO
 
