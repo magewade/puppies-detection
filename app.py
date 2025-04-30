@@ -12,6 +12,7 @@ import ffmpeg
 import io
 import re 
 
+
 model = YOLO("data/weights/best.pt")
 
 st.title("Трекинг щенков с YOLOv8 🐶")
@@ -37,6 +38,20 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
             return info["url"]
+
+    # Функция получения данных потока
+    def process_stream(stream_url):
+        try:
+            out, err = (
+                ffmpeg.input(stream_url)
+                .output("pipe:1", format="rawvideo", pix_fmt="bgr24", s="640x360")
+                .run(capture_stdout=True, capture_stderr=True)
+            )
+            print("Output:", out)
+            print("Error:", err)
+        except ffmpeg.Error as e:
+            print("FFmpeg Error:", e.stderr)
+            raise
 
     # Выбираем формат видео
     def list_formats(youtube_url):
@@ -85,6 +100,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     if start_button:
         # Получаем ссылку на поток
         stream_url = get_stream_info(youtube_url, selected_format_id)
+        process_stream(stream_url)
         if not stream_url:
             st.error("❌ Не удалось получить ссылку на поток.")
             st.stop()
