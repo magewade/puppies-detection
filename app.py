@@ -29,7 +29,7 @@ option = st.radio(
 # TODO
 
 if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
-    # Устанавливаем параметры для получения потока
+    # Функция для получения ссылки на поток из YouTube
     def get_stream_info(youtube_url, format_id):
         ydl_opts = {
             "quiet": True,
@@ -39,6 +39,12 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
             return info["url"]
+
+    # Функция для отображения видео из потока
+    def stream_video_hls(stream_url):
+        reader = imageio.get_reader(stream_url, "ffmpeg")
+        for frame in reader:
+            yield frame
 
     # Выбираем формат видео
     def list_formats(youtube_url):
@@ -103,17 +109,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         st.success(f"✅ Стрим подключен\nРазмеры (по данным): {frame_width}x{frame_height}")
         st.code(stream_url, language="bash")
 
-        cap = cv2.VideoCapture(stream_url)
-
-        if not cap.isOpened():
-            st.error("🚫 Не удалось открыть поток. Возможно, он завершён или нестабилен.")
-            st.stop()
-
-        # Попробуем получить реальные размеры
-        actual_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)) or frame_width
-        actual_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) or frame_height
-        st.info(f"📺 Детектировано: {actual_width}x{actual_height}")
-
+        # Инференс потока
         placeholder = st.empty()
 
         # Кнопка остановки
@@ -131,21 +127,21 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             if st.session_state.stop_button_clicked:
                 break
 
-            ret, frame = cap.read()
-            if not ret or frame is None:
-                st.warning("🚫 Поток завершён или прерван")
+            # Используем imageio для захвата кадров из потока
+            try:
+                for frame in stream_video_hls(stream_url):
+                    # Преобразуем размер под модель, если нужно
+                    frame = imageio.core.util.Array(frame)  # Преобразуем в формат, поддерживаемый OpenCV
+
+                    # Отображение обработанного кадра
+                    placeholder.image(frame, channels="RGB", use_container_width=True)
+
+                    # Добавляем задержку для предотвращения излишней нагрузки
+                    time.sleep(0.1)
+
+            except Exception as e:
+                st.error(f"Ошибка при обработке потока: {e}")
                 break
-
-            # Преобразуем размер под модель, если нужно
-            frame = cv2.resize(frame, (frame_width, frame_height))
-
-            # Отображение обработанного кадра
-            placeholder.image(frame, channels="BGR", use_container_width=True)
-
-            # Добавляем задержку для предотвращения излишней нагрузки
-            time.sleep(0.1)
-
-        cap.release()
 
 
 # TODO
