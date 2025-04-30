@@ -10,6 +10,7 @@ import time
 import cv2  # добавлен импорт OpenCV
 import ffmpeg
 import io
+import re 
 
 model = YOLO("data/weights/best.pt")
 

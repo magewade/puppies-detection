@@ -26,10 +26,12 @@ executing==2.2.0
 fastapi==0.115.12
 fastapi-cli==0.0.7
 ffmpeg==1.4
+ffmpeg-python==0.2.0
 filelock==3.18.0
 flake8==7.2.0
 fonttools==4.57.0
 fsspec==2025.3.2
+future==1.0.0
 gitdb==4.0.12
 GitPython==3.1.44
 h11==0.14.0
