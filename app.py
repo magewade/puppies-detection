@@ -129,41 +129,38 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         stop_button = st.button("⛔ Остановить", key="stop_button")
         # Цикл обработки кадров с возможностью остановки
         while True:
+            try:
+                # Получаем кадр
+                raw_frame = pipe.stdout.read(frame_size)
+                if not raw_frame:
+                    st.warning("🚫 Поток завершён или прерван")
+                    break
 
-            # If the stop button is clicked, update the session state
-            if stop_button:
-                st.session_state.stop_button_clicked = True
-                st.info("Остановка инференса...")
+                # Обработка кадра
+                frame = np.frombuffer(raw_frame, dtype=np.uint8)
+                if frame.size != frame_size:
+                    continue
+
+                frame = frame.reshape((frame_height, frame_width, 3))
+
+                # Инференс
+                results = model.track(
+                    source=frame,
+                    persist=True,
+                    tracker="configs/puppy_tracker.yaml",
+                    verbose=False,
+                    conf=0.4,
+                )
+
+                annotated = results[0].plot() if results else frame
+                placeholder.image(annotated, channels="BGR", use_container_width=True)
+
+                time.sleep(0.1)
+
+            except Exception as e:
+                st.error(f"❌ Ошибка при обработке потока: {e}")
                 break
 
-            # If the stop button has been clicked (via session state), break the loop
-            if st.session_state.stop_button_clicked:
-                st.info("Остановка инференса...")
-                break
-
-            raw_frame = pipe.stdout.read(frame_size)
-            if not raw_frame:
-                st.warning("🚫 Поток завершён или прерван")
-                break
-
-            frame = np.frombuffer(raw_frame, dtype=np.uint8)
-            if frame.size != frame_size:
-                continue
-
-            frame = frame.reshape((frame_height, frame_width, 3))
-
-            results = model.track(
-                source=frame,
-                persist=True,
-                tracker="configs/puppy_tracker.yaml",
-                verbose=False,
-                conf=0.4,
-            )
-
-            annotated = results[0].plot() if results else frame
-            placeholder.image(annotated, channels="BGR", use_container_width=True)
-
-            time.sleep(0.1)
 
         pipe.terminate()
 
