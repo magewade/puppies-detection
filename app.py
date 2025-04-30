@@ -64,9 +64,6 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     match = re.search(r"(\d+)x(\d+)", selected_format_label)
     if match:
         frame_width, frame_height = int(match.group(1)), int(match.group(2))
-        st.info(
-            f"📐 Извлечены размеры из выбранного формата: {frame_width}x{frame_height}"
-        )
     else:
         st.warning("⚠️ Не удалось извлечь размеры, используем 640x360 по умолчанию")
         frame_width, frame_height = 640, 360
@@ -93,7 +90,6 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             st.stop()
 
         st.success(f"✅ Стрим подключен\nРазмеры: {frame_width}x{frame_height}")
-        st.code(stream_url, language="bash")
 
         try:
             reader = imageio.get_reader(stream_url, "ffmpeg")
