@@ -6,6 +6,7 @@ import shutil
 import uuid
 import yt_dlp
 import imageio
+import imageio.v3 as iio
 import numpy as np
 import time
 import cv2  # добавлен импорт OpenCV
@@ -42,6 +43,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             formats = info.get("formats", [])
             format_options = []
             for f in formats:
+                # Пропускаем не-видео форматы
                 if f.get("vcodec") != "none":
                     format_id = f.get("format_id")
                     ext = f.get("ext")
@@ -58,90 +60,93 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     selected_format_label, selected_format_id = st.selectbox(
         "Выбери формат видео для инференса",
         options=available_formats,
-        format_func=lambda x: x[0],
+        format_func=lambda x: x[0],  # показываем читабельную подпись
     )
 
     match = re.search(r"(\d+)x(\d+)", selected_format_label)
     if match:
         frame_width, frame_height = int(match.group(1)), int(match.group(2))
+        st.info(
+            f"📐 Извлечены размеры из выбранного формата: {frame_width}x{frame_height}, {selected_format_id}"
+        )
     else:
-        st.warning("⚠️ Не удалось извлечь размеры, используем 640x360 по умолчанию")
+        st.warning(
+            f"⚠️ Не удалось извлечь размеры из строки '{selected_format_label}', используем значения по умолчанию"
+        )
         frame_width, frame_height = 640, 360
 
-    def get_stream_url(youtube_url, format_id):
+    def get_stream_info(youtube_url, format_id):
         ydl_opts = {
             "quiet": True,
             "format": format_id,
+            "noplaylist": False,
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
-            return info.get("url", None)
+            return info["url"]
 
     st.info(
-        "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает кадры на CPU"
+        "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает каждый кадр на CPU Streamlit"
     )
 
     start_button = st.button("▶️ Начать инференс", key="start_button")
 
     if start_button:
-        stream_url = get_stream_url(youtube_url, selected_format_id)
+        stream_url = get_stream_info(youtube_url, selected_format_id)
         if not stream_url:
             st.error("❌ Не удалось получить ссылку на поток.")
             st.stop()
 
-        st.success(f"✅ Стрим подключен\nРазмеры: {frame_width}x{frame_height}")
+        st.success(
+            f"✅ Стрим подключен\nРазмеры (по данным): {frame_width}x{frame_height}"
+        )
         st.code(stream_url, language="bash")
 
-        try:
-            reader = imageio.get_reader(stream_url, format="ffmpeg")
-        except Exception as e:
-            st.error(f"🚫 Не удалось подключиться к потоку: {e}")
-            st.stop()
-
         placeholder = st.empty()
-
-        if "stop_button_clicked" not in st.session_state:
-            st.session_state.stop_button_clicked = False
+        st.session_state.stop_button_clicked = False
 
         stop_button = st.button("⛔ Остановить", key="stop_button")
 
-        for i, frame in enumerate(reader):
-            if st.session_state.stop_button_clicked or stop_button:
+        def stream_with_imageio(
+            stream_url, model, frame_width, frame_height, placeholder
+        ):
+            try:
+                for frame in iio.imiter(stream_url, plugin="ffmpeg"):
+                    frame_resized = cv2.resize(frame, (frame_width, frame_height))
+
+                    results = model.track(
+                        source=frame_resized,
+                        persist=True,
+                        tracker="configs/puppy_tracker.yaml",
+                        verbose=False,
+                        conf=0.4,
+                    )
+
+                    annotated = results[0].plot() if results else frame_resized
+                    placeholder.image(
+                        annotated, channels="BGR", use_container_width=True
+                    )
+
+                    if st.session_state.stop_button_clicked:
+                        break
+
+            except Exception as e:
+                st.error(f"❌ Ошибка при чтении потока: {e}")
+
+        thread = threading.Thread(
+            target=stream_with_imageio,
+            args=(stream_url, model, frame_width, frame_height, placeholder),
+        )
+        thread.start()
+
+        while thread.is_alive():
+            if stop_button:
                 st.session_state.stop_button_clicked = True
                 st.info("⛔ Остановка инференса...")
                 break
+            time.sleep(0.1)
 
-            if frame is None or not isinstance(frame, np.ndarray):
-                st.warning("🚫 Поток завершён или прерван")
-                break
-
-            # Приводим размер к нужному
-            frame = imageio.core.util.Array(frame)
-            frame = np.array(frame)
-
-            if (frame.shape[1], frame.shape[0]) != (frame_width, frame_height):
-                frame = imageio.core.util.Array(
-                    np.array(imageio.core.util.asarray(frame))
-                )
-                frame = np.array(
-                    imageio.v3.imresize(frame, (frame_height, frame_width))
-                )
-
-            # YOLO inference
-            results = model.track(
-                source=frame,
-                persist=True,
-                tracker="configs/puppy_tracker.yaml",
-                verbose=False,
-                conf=0.4,
-            )
-
-            annotated = results[0].plot() if results else frame
-            placeholder.image(annotated, channels="BGR", use_container_width=True)
-
-            time.sleep(0.1)  # небольшая задержка для потока
-
-        reader.close()
+        thread.join()
 
 # TODO
 
