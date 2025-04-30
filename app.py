@@ -147,9 +147,9 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
                 break
 
             raw_frame = pipe.stdout.read(frame_size)
-            if not raw_frame:
-                st.warning("🚫 Поток завершён или прерван")
-                break
+            # if not raw_frame:
+            #     st.warning("🚫 Поток завершён или прерван")
+            #     break
 
             frame = np.frombuffer(raw_frame, dtype=np.uint8)
             if frame.size != frame_size:
