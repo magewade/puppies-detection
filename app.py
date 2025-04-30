@@ -66,6 +66,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         st.info(
             f"📐 Извлечены размеры из выбранного формата: {frame_width}x{frame_height}, {selected_format_id}"
         )
+
     else:
         st.warning(f"⚠️ Не удалось извлечь размеры из строки '{selected_format_label}', используем значения по умолчанию")
         frame_width, frame_height = 640, 360
@@ -92,10 +93,13 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             st.error("❌ Не удалось получить ссылку на поток.")
             st.stop()
 
-        st.success(f"✅ Стрим подключен\n📺 Ссылка на поток: {stream_url}\n📐 Размеры: {frame_width}x{frame_height}")
+        st.success(f"✅ Стрим подключен\n Размеры: {frame_width}x{frame_height}")
+        st.code(stream_url, language="bash")
 
         ffmpeg_cmd = [
             "ffmpeg",
+            "-headers",
+            "User-Agent: Mozilla/5.0\r\n",
             "-i",
             stream_url,
             "-vf",
