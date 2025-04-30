@@ -89,7 +89,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             "quiet",
             "-",
         ]
-        print(list_formats("https://www.youtube.com/watch?v=bYlEgU2tU5w")
+        print(list_formats("https://www.youtube.com/watch?v=bYlEgU2tU5w"))
 
         pipe = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
 
