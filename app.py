@@ -59,7 +59,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     available_formats = list_formats(youtube_url)
 
     selected_format_label, selected_format_id = st.selectbox(
-        "Выбери формат видео для инференса",
+        "Выберите формат видео для инференса",
         options=available_formats,
         format_func=lambda x: x[0],  
     )
