@@ -49,6 +49,8 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     # 231 - mp4 -
     # 232 - mp4 -
     # 270 - mp4 -
+    
+    st.text(list_formats("https://www.youtube.com/watch?v=bYlEgU2tU5w"))
 
     def get_stream_info(youtube_url):
         ydl_opts = {
