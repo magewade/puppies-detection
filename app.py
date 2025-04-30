@@ -62,32 +62,21 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     youtube_url = "https://www.youtube.com/watch?v=bYlEgU2tU5w"
     available_formats = list_formats(youtube_url)
 
-    # selected_format_label, selected_format_id = st.selectbox(
-    #     "Выбери формат видео для инференса",
-    #     options=available_formats,
-    #     format_func=lambda x: x[0],  # показываем читабельную подпись
-    # )
+    selected_format_label, selected_format_id = st.selectbox(
+        "Выбери формат видео для инференса",
+        options=available_formats,
+        format_func=lambda x: x[0],  # показываем читабельную подпись
+    )
 
     def get_stream_info(youtube_url, format_id):
         ydl_opts = {
             "quiet": True,
             "format": format_id,
-            "noplaylist": True,
+            "noplaylist": False,
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
             return info["url"]
-
-    def get_m3u8_stream_url(youtube_url):
-        ydl_opts = {"quiet": True}
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(youtube_url, download=False)
-            formats = info.get("formats", [])
-            for f in formats:
-                if "m3u8" in f.get("url", ""):  # иногда .m3u8 прямо в URL
-                    return f["url"]
-        return None
-
 
     st.info(
         "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает каждый кадр на CPU Streamlit"
@@ -96,7 +85,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     start_button = st.button("▶️ Начать инференс", key="start_button")
 
     if start_button:
-        stream_url = get_m3u8_stream_url(youtube_url)
+        stream_url = get_stream_info(youtube_url, selected_format_id)
         if not stream_url:
             st.error("Не удалось получить поток. Возможно, YouTube заблокировал доступ или не найден подходящий формат (m3u8).")
             st.stop()
@@ -147,9 +136,9 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
                 break
 
             raw_frame = pipe.stdout.read(frame_size)
-            # if not raw_frame:
-            #     st.warning("🚫 Поток завершён или прерван")
-            #     break
+            if not raw_frame:
+                st.warning("🚫 Поток завершён или прерван")
+                break
 
             frame = np.frombuffer(raw_frame, dtype=np.uint8)
             if frame.size != frame_size:
