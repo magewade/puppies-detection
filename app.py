@@ -61,16 +61,14 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     selected_format_label, selected_format_id = st.selectbox(
         "Выберите формат видео для инференса",
         options=available_formats,
-        format_func=lambda x: x[0],  
+        format_func=lambda x: x[0],
     )
 
     match = re.search(r"(\d+)x(\d+)", selected_format_label)
     if match:
         frame_width, frame_height = int(match.group(1)), int(match.group(2))
     else:
-        st.warning(
-            f"⚠️ Не удалось извлечь размеры, используем значения по умолчанию"
-        )
+        st.warning(f"⚠️ Не удалось извлечь размеры, используем значения по умолчанию")
         frame_width, frame_height = 640, 360
 
     def get_stream_info(youtube_url, format_id):
@@ -99,15 +97,17 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
         st.success(f"✅ Стрим подключен: {frame_width}x{frame_height}")
 
-        headers = (
-    f"User-Agent: Mozilla/5.0\r\n"
-    f"Referer: https://www.youtube.com\r\n"
-    # f"Cookie: {cookie_string}\r\n"
-)
+        headers = {
+            "User-Agent": "Mozilla/5.0",
+            "Referer": "https://www.youtube.com",
+            # Убедитесь, что добавлены актуальные куки:
+            # "Cookie": cookie_string,
+        }
 
         ffmpeg_cmd = [
             "ffmpeg",
-            "-headers", headers,
+            "-headers",
+            f"User-Agent: {headers['User-Agent']}\r\nReferer: {headers['Referer']}",
             "-i",
             stream_url,
             "-vf",
