@@ -8,8 +8,7 @@ import yt_dlp
 import numpy as np
 import time
 import cv2  # добавлен импорт OpenCV
-import ffmpeg
-import io
+import subprocess
 import re 
 
 
@@ -27,14 +26,6 @@ option = st.radio(
 )
 
 # TODO
-
-import os
-import time
-import numpy as np
-import cv2
-import streamlit as st
-import ffmpeg
-import yt_dlp
 
 if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     st.subheader("Инференс YouTube трансляции 🎥")
@@ -75,9 +66,6 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     match = re.search(r"(\d+)x(\d+)", selected_format_label)
     if match:
         frame_width, frame_height = int(match.group(1)), int(match.group(2))
-        st.info(
-            f"📐 Извлечены размеры из выбранного формата: {frame_width}x{frame_height}, {selected_format_id}"
-        )
     else:
         st.warning(
             f"⚠️ Не удалось извлечь размеры из строки '{selected_format_label}', используем значения по умолчанию"
@@ -106,7 +94,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             st.error("❌ Не удалось получить ссылку на поток.")
             st.stop()
 
-        st.success(f"✅ Стрим подключен\n Размеры: {frame_width}x{frame_height}")
+        st.success(f"✅ Стрим подключен: {frame_width}x{frame_height}")
 
         ffmpeg_cmd = [
             "ffmpeg",
