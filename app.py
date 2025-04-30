@@ -93,63 +93,44 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             st.error("❌ Не удалось получить ссылку на поток.")
             st.stop()
 
-        st.success(f"✅ Стрим подключен\n Размеры: {frame_width}x{frame_height}")
+        st.success(f"✅ Стрим подключен\nРазмеры (по данным): {frame_width}x{frame_height}")
         st.code(stream_url, language="bash")
 
-        ffmpeg_cmd = [
-            "ffmpeg",
-            "-headers",
-            "User-Agent: Mozilla/5.0\r\n",
-            "-i",
-            stream_url,
-            "-vf",
-            f"scale={frame_width}:{frame_height}",
-            "-f",
-            "image2pipe",
-            "-pix_fmt",
-            "bgr24",
-            "-vcodec",
-            "rawvideo",
-            "-loglevel",
-            "quiet",
-            "-",
-        ]
+        cap = cv2.VideoCapture(stream_url)
 
-        pipe = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
+        if not cap.isOpened():
+            st.error("🚫 Не удалось открыть поток. Возможно, он завершён или нестабилен.")
+            st.stop()
 
-        frame_size = frame_width * frame_height * 3
+        # Попробуем получить реальные размеры, если они не были извлечены ранее
+        actual_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)) or frame_width
+        actual_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) or frame_height
+        st.info(f"📺 Детектировано: {actual_width}x{actual_height}")
+
         placeholder = st.empty()
 
-        # Цикл обработки кадров с возможностью остановки
-        # Check if stop button has already been created in session state
-        if 'stop_button_clicked' not in st.session_state:
+        # Кнопка остановки
+        if "stop_button_clicked" not in st.session_state:
             st.session_state.stop_button_clicked = False
 
         stop_button = st.button("⛔ Остановить", key="stop_button")
-        # Цикл обработки кадров с возможностью остановки
-        while True:
 
-            # If the stop button is clicked, update the session state
+        while True:
             if stop_button:
                 st.session_state.stop_button_clicked = True
-                st.info("Остановка инференса...")
+                st.info("⛔ Остановка инференса...")
                 break
 
-            # If the stop button has been clicked (via session state), break the loop
             if st.session_state.stop_button_clicked:
-                st.info("Остановка инференса...")
                 break
 
-            raw_frame = pipe.stdout.read(frame_size)
-            if not raw_frame:
+            ret, frame = cap.read()
+            if not ret or frame is None:
                 st.warning("🚫 Поток завершён или прерван")
                 break
 
-            frame = np.frombuffer(raw_frame, dtype=np.uint8)
-            if frame.size != frame_size:
-                continue
-
-            frame = frame.reshape((frame_height, frame_width, 3))
+            # Преобразуем размер под модель, если надо
+            frame = cv2.resize(frame, (frame_width, frame_height))
 
             results = model.track(
                 source=frame,
@@ -164,7 +145,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
             time.sleep(0.1)
 
-        pipe.terminate()
+        cap.release()
 
 
 # TODO
