@@ -90,9 +90,10 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             st.stop()
 
         st.success(f"✅ Стрим подключен\nРазмеры: {frame_width}x{frame_height}")
+        st.code(stream_url, language="bash")
 
         try:
-            reader = imageio.get_reader(stream_url, "ffmpeg")
+            reader = imageio.get_reader(stream_url, format="ffmpeg")
         except Exception as e:
             st.error(f"🚫 Не удалось подключиться к потоку: {e}")
             st.stop()
