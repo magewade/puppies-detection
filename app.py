@@ -37,17 +37,22 @@ import ffmpeg
 import yt_dlp
 
 if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
-    # Прокси по умолчанию
-    proxy_url = "https://51.159.107.238"
+    st.subheader("Инференс YouTube трансляции 🎥")
 
-    # Получение доступных форматов
+    st.info(
+        "Это прямая трансляция, щенки могут устраивать совсем уж инфернальный хаос, спать или быть не в кадре :)"
+    )
+
+    st.video("https://www.youtube.com/watch?v=bYlEgU2tU5w")
+
     def list_formats(youtube_url):
-        ydl_opts = {"quiet": True, "proxy": proxy_url}
+        ydl_opts = {"quiet": True}
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
             formats = info.get("formats", [])
             format_options = []
             for f in formats:
+                # Пропускаем не-видео форматы
                 if f.get("vcodec") != "none":
                     format_id = f.get("format_id")
                     ext = f.get("ext")
@@ -58,54 +63,36 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
                     )
             return format_options
 
-    # Получаем ссылку на поток
+    youtube_url = "https://www.youtube.com/watch?v=bYlEgU2tU5w"
+    available_formats = list_formats(youtube_url)
+
+    selected_format_label, selected_format_id = st.selectbox(
+        "Выбери формат видео для инференса",
+        options=available_formats,
+        format_func=lambda x: x[0],  # показываем читабельную подпись
+    )
+
+    match = re.search(r"(\d+)x(\d+)", selected_format_label)
+    if match:
+        frame_width, frame_height = int(match.group(1)), int(match.group(2))
+        st.info(
+            f"📐 Извлечены размеры из выбранного формата: {frame_width}x{frame_height}, {selected_format_id}"
+        )
+    else:
+        st.warning(
+            f"⚠️ Не удалось извлечь размеры из строки '{selected_format_label}', используем значения по умолчанию"
+        )
+        frame_width, frame_height = 640, 360
+
     def get_stream_info(youtube_url, format_id):
         ydl_opts = {
             "quiet": True,
             "format": format_id,
             "noplaylist": False,
-            "proxy": proxy_url,
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
             return info["url"]
-
-    # Процессинг видеопотока через ffmpeg
-    def process_stream(stream_url):
-        try:
-            env = os.environ.copy()
-            env["http_proxy"] = proxy_url
-            env["https_proxy"] = proxy_url
-            out, _ = (
-                ffmpeg.input(stream_url)
-                .output("pipe:1", format="rawvideo", pix_fmt="bgr24", s="640x360")
-                .run(capture_stdout=True, capture_stderr=True, env=env)
-            )
-            return out
-        except ffmpeg.Error as e:
-            st.error("FFmpeg error occurred:")
-            st.code(
-                e.stderr.decode("utf8") if e.stderr else "No stderr", language="bash"
-            )
-            return None
-
-    # Streamlit UI
-    st.subheader("Инференс YouTube трансляции 🎥")
-    st.info(
-        "Это прямая трансляция, щенки могут устраивать совсем уж инфернальный хаос, спать или быть не в кадре :)"
-    )
-
-    st.video("https://www.youtube.com/watch?v=bYlEgU2tU5w")
-    youtube_url = "https://www.youtube.com/watch?v=bYlEgU2tU5w"
-
-    available_formats = list_formats(youtube_url)
-    selected_format_label, selected_format_id = st.selectbox(
-        "Выбери формат видео для инференса",
-        options=available_formats,
-        format_func=lambda x: x[0],
-    )
-
-    frame_width, frame_height = 640, 360
 
     st.info(
         "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает каждый кадр на CPU Streamlit"
@@ -119,44 +106,75 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             st.error("❌ Не удалось получить ссылку на поток.")
             st.stop()
 
-        st.success(f"✅ Стрим подключен\nРазмеры: {frame_width}x{frame_height}")
-        st.code(stream_url, language="bash")
+        st.success(f"✅ Стрим подключен\n Размеры: {frame_width}x{frame_height}")
 
+        ffmpeg_cmd = [
+            "ffmpeg",
+            "-i",
+            stream_url,
+            "-vf",
+            f"scale={frame_width}:{frame_height}",
+            "-f",
+            "image2pipe",
+            "-pix_fmt",
+            "bgr24",
+            "-vcodec",
+            "rawvideo",
+            "-loglevel",
+            "quiet",
+            "-",
+        ]
+
+        pipe = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
+
+        frame_size = frame_width * frame_height * 3
         placeholder = st.empty()
+
+        # Цикл обработки кадров с возможностью остановки
+        # Check if stop button has already been created in session state
+        if "stop_button_clicked" not in st.session_state:
+            st.session_state.stop_button_clicked = False
+
         stop_button = st.button("⛔ Остановить", key="stop_button")
-
+        # Цикл обработки кадров с возможностью остановки
         while True:
+
+            # If the stop button is clicked, update the session state
             if stop_button:
+                st.session_state.stop_button_clicked = True
+                st.info("Остановка инференса...")
                 break
 
-            # Обработка потока через ffmpeg
-            env = os.environ.copy()
-            env["http_proxy"] = proxy_url
-            env["https_proxy"] = proxy_url
-
-            try:
-                out, _ = (
-                    ffmpeg.input(stream_url)
-                    .output(
-                        "pipe:1",
-                        format="rawvideo",
-                        pix_fmt="bgr24",
-                        s=f"{frame_width}x{frame_height}",
-                    )
-                    .run(capture_stdout=True, capture_stderr=True, env=env)
-                )
-            except ffmpeg.Error as e:
-                st.warning("🚫 Проблема при получении потока")
-                st.code(
-                    e.stderr.decode("utf8") if e.stderr else "No stderr",
-                    language="bash",
-                )
+            # If the stop button has been clicked (via session state), break the loop
+            if st.session_state.stop_button_clicked:
+                st.info("Остановка инференса...")
                 break
 
-            frame = np.frombuffer(out, np.uint8).reshape((frame_height, frame_width, 3))
-            placeholder.image(frame, channels="BGR", use_container_width=True)
+            raw_frame = pipe.stdout.read(frame_size)
+            if not raw_frame:
+                st.warning("🚫 Поток завершён или прерван")
+                break
+
+            frame = np.frombuffer(raw_frame, dtype=np.uint8)
+            if frame.size != frame_size:
+                continue
+
+            frame = frame.reshape((frame_height, frame_width, 3))
+
+            results = model.track(
+                source=frame,
+                persist=True,
+                tracker="configs/puppy_tracker.yaml",
+                verbose=False,
+                conf=0.4,
+            )
+
+            annotated = results[0].plot() if results else frame
+            placeholder.image(annotated, channels="BGR", use_container_width=True)
 
             time.sleep(0.1)
+
+        pipe.terminate()
 
 # TODO
 
