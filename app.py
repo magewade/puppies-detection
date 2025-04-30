@@ -96,8 +96,11 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
         st.success(f"✅ Стрим подключен: {frame_width}x{frame_height}")
 
+        headers = "User-Agent: Mozilla/5.0\r\nReferer: https://www.youtube.com\r\n"
+
         ffmpeg_cmd = [
             "ffmpeg",
+            "-headers", headers,
             "-i",
             stream_url,
             "-vf",
