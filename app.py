@@ -23,6 +23,7 @@ option = st.radio(
     ),
 )
 
+# TODO
 
 if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     st.subheader("Инференс YouTube трансляции 🎥")
@@ -38,8 +39,16 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
             formats = info.get("formats", [])
+            format_options = []
             for f in formats:
-                print(f"{f['format_id']} - {f['ext']} - {f.get('format_note', '')}")
+                # Пропускаем не-видео форматы
+                if f.get("vcodec") != "none":
+                    format_id = f.get("format_id")
+                    ext = f.get("ext")
+                    note = f.get("format_note", "")
+                    resolution = f.get("resolution") or ""
+                    format_options.append((f"{format_id} - {ext} - {resolution} - {note}", format_id))
+            return format_options
 
     # 233 - mp4 - Default, low
     # 234 - mp4 - Default, high
@@ -50,10 +59,19 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     # 232 - mp4 -
     # 270 - mp4 -
 
-    def get_stream_info(youtube_url):
+    youtube_url = "https://www.youtube.com/watch?v=bYlEgU2tU5w"
+    available_formats = list_formats(youtube_url)
+
+    selected_format_label, selected_format_id = st.selectbox(
+        "Выбери формат видео для инференса",
+        options=available_formats,
+        format_func=lambda x: x[0],  # показываем читабельную подпись
+    )
+
+    def get_stream_info(youtube_url, format_id):
         ydl_opts = {
             "quiet": True,
-            "format": "231",
+            "format": format_id,
             "noplaylist": True,
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -64,11 +82,10 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает каждый кадр на CPU Streamlit"
     )
 
-    youtube_url = "https://www.youtube.com/watch?v=bYlEgU2tU5w"
     start_button = st.button("▶️ Начать инференс", key="start_button")
 
     if start_button:
-        stream_url = get_stream_info(youtube_url)
+        stream_url = get_stream_info(youtube_url, selected_format_id)
         # frame_width, frame_height = 1280, 720
         frame_width, frame_height = 640, 360
         st.success(f"Стрим подключен: {frame_width}x{frame_height}")
@@ -141,6 +158,9 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             time.sleep(0.1)
 
         pipe.terminate()
+
+
+# TODO
 
 
 elif option == "Как это работает 🔎":
