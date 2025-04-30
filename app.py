@@ -62,11 +62,11 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     youtube_url = "https://www.youtube.com/watch?v=bYlEgU2tU5w"
     available_formats = list_formats(youtube_url)
 
-    selected_format_label, selected_format_id = st.selectbox(
-        "Выбери формат видео для инференса",
-        options=available_formats,
-        format_func=lambda x: x[0],  # показываем читабельную подпись
-    )
+    # selected_format_label, selected_format_id = st.selectbox(
+    #     "Выбери формат видео для инференса",
+    #     options=available_formats,
+    #     format_func=lambda x: x[0],  # показываем читабельную подпись
+    # )
 
     def get_stream_info(youtube_url, format_id):
         ydl_opts = {
@@ -84,9 +84,10 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             info = ydl.extract_info(youtube_url, download=False)
             formats = info.get("formats", [])
             for f in formats:
-                if f.get("protocol") == "m3u8":
-                    return f["url"]  # вот это ffmpeg может!
+                if "m3u8" in f.get("url", ""):  # иногда .m3u8 прямо в URL
+                    return f["url"]
         return None
+
 
     st.info(
         "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает каждый кадр на CPU Streamlit"
@@ -96,6 +97,9 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
     if start_button:
         stream_url = get_m3u8_stream_url(youtube_url)
+        if not stream_url:
+            st.error("Не удалось получить поток. Возможно, YouTube заблокировал доступ или не найден подходящий формат (m3u8).")
+            st.stop()
         # frame_width, frame_height = 1280, 720
         frame_width, frame_height = 640, 360
         st.success(f"Стрим подключен: {frame_width}x{frame_height}")
