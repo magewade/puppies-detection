@@ -28,44 +28,21 @@ option = st.radio(
 
 # TODO
 
+import os
+import time
+import numpy as np
+import cv2
+import streamlit as st
+import ffmpeg
+import yt_dlp
+
 if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
-    def get_stream_info(youtube_url, format_id):
-        ydl_opts = {
-            "quiet": True,
-            "format": format_id,
-            "noplaylist": False,
-        }
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(youtube_url, download=False)
-            return info["url"]
-        
-    def get_stream_url(youtube_url, format_id):
-        ydl_opts = {
-            "quiet": True,
-            "format": format_id,
-            "noplaylist": False,
-        }
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(youtube_url, download=False)
-            return info["url"]
+    # Прокси по умолчанию
+    proxy_url = "http://142.93.202.130:3128"
 
-    def process_stream(stream_url):
-        try:
-            out, _ = (
-                ffmpeg.input(stream_url)
-                .output("pipe:1", format="rawvideo", pix_fmt="bgr24", s="640x360")
-                .run(capture_stdout=True, capture_stderr=True)
-            )
-            return out
-        except ffmpeg.Error as e:
-            # Показываем stderr прямо в Streamlit
-            st.error("FFmpeg error occurred:")
-            st.code(e.stderr.decode('utf8') if e.stderr else "No stderr", language="bash")
-            return None
-
-    # Выбираем формат видео
+    # Получение доступных форматов
     def list_formats(youtube_url):
-        ydl_opts = {"quiet": True}
+        ydl_opts = {"quiet": True, "proxy": proxy_url}
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
             formats = info.get("formats", [])
@@ -76,31 +53,60 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
                     ext = f.get("ext")
                     note = f.get("format_note", "")
                     resolution = f.get("resolution") or ""
-                    format_options.append((f"{format_id} - {ext} - {resolution} - {note}", format_id))
+                    format_options.append(
+                        (f"{format_id} - {ext} - {resolution} - {note}", format_id)
+                    )
             return format_options
 
-    # Настройка интерфейса Streamlit
+    # Получаем ссылку на поток
+    def get_stream_info(youtube_url, format_id):
+        ydl_opts = {
+            "quiet": True,
+            "format": format_id,
+            "noplaylist": False,
+            "proxy": proxy_url,
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(youtube_url, download=False)
+            return info["url"]
+
+    # Процессинг видеопотока через ffmpeg
+    def process_stream(stream_url):
+        try:
+            env = os.environ.copy()
+            env["http_proxy"] = proxy_url
+            env["https_proxy"] = proxy_url
+            out, _ = (
+                ffmpeg.input(stream_url)
+                .output("pipe:1", format="rawvideo", pix_fmt="bgr24", s="640x360")
+                .run(capture_stdout=True, capture_stderr=True, env=env)
+            )
+            return out
+        except ffmpeg.Error as e:
+            st.error("FFmpeg error occurred:")
+            st.code(
+                e.stderr.decode("utf8") if e.stderr else "No stderr", language="bash"
+            )
+            return None
+
+    # Streamlit UI
     st.subheader("Инференс YouTube трансляции 🎥")
     st.info(
         "Это прямая трансляция, щенки могут устраивать совсем уж инфернальный хаос, спать или быть не в кадре :)"
     )
 
     st.video("https://www.youtube.com/watch?v=bYlEgU2tU5w")
-
-    # Доступные форматы видео с YouTube
     youtube_url = "https://www.youtube.com/watch?v=bYlEgU2tU5w"
-    available_formats = list_formats(youtube_url)
 
+    available_formats = list_formats(youtube_url)
     selected_format_label, selected_format_id = st.selectbox(
         "Выбери формат видео для инференса",
         options=available_formats,
-        format_func=lambda x: x[0],  # показываем читабельную подпись
+        format_func=lambda x: x[0],
     )
 
-    # Получаем размеры из выбранного формата
     frame_width, frame_height = 640, 360
 
-    # Инференс потока
     st.info(
         "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает каждый кадр на CPU Streamlit"
     )
@@ -108,45 +114,48 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     start_button = st.button("▶️ Начать инференс", key="start_button")
 
     if start_button:
-        # Получаем ссылку на поток
         stream_url = get_stream_info(youtube_url, selected_format_id)
-        process_stream(stream_url)
         if not stream_url:
             st.error("❌ Не удалось получить ссылку на поток.")
             st.stop()
 
-        st.success(f"✅ Стрим подключен\nРазмеры (по данным): {frame_width}x{frame_height}")
+        st.success(f"✅ Стрим подключен\nРазмеры: {frame_width}x{frame_height}")
         st.code(stream_url, language="bash")
 
-        # Инференс потока
         placeholder = st.empty()
-
-        # Кнопка остановки
         stop_button = st.button("⛔ Остановить", key="stop_button")
 
         while True:
             if stop_button:
                 break
 
-            # Используем ffmpeg для получения потока
-            out, _ = (
-                ffmpeg.input(stream_url)
-                .output("pipe:1", format="rawvideo", pix_fmt="bgr24", s=f"{frame_width}x{frame_height}")
-                .run(capture_stdout=True, capture_stderr=True)
-            )
+            # Обработка потока через ffmpeg
+            env = os.environ.copy()
+            env["http_proxy"] = proxy_url
+            env["https_proxy"] = proxy_url
 
-            # Преобразуем байты в изображение
-            nparr = np.frombuffer(out, np.uint8)
-            frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
-
-            if frame is None:
-                st.warning("🚫 Поток завершён или прерван")
+            try:
+                out, _ = (
+                    ffmpeg.input(stream_url)
+                    .output(
+                        "pipe:1",
+                        format="rawvideo",
+                        pix_fmt="bgr24",
+                        s=f"{frame_width}x{frame_height}",
+                    )
+                    .run(capture_stdout=True, capture_stderr=True, env=env)
+                )
+            except ffmpeg.Error as e:
+                st.warning("🚫 Проблема при получении потока")
+                st.code(
+                    e.stderr.decode("utf8") if e.stderr else "No stderr",
+                    language="bash",
+                )
                 break
 
-            # Отображение обработанного кадра
+            frame = np.frombuffer(out, np.uint8).reshape((frame_height, frame_width, 3))
             placeholder.image(frame, channels="BGR", use_container_width=True)
 
-            # Добавляем задержку для предотвращения излишней нагрузки
             time.sleep(0.1)
 
 # TODO
