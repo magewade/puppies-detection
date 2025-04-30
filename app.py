@@ -69,7 +69,6 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
     if start_button:
         stream_url = get_stream_info(youtube_url)
-        st.text(list_formats("https://www.youtube.com/watch?v=bYlEgU2tU5w"))
         # frame_width, frame_height = 1280, 720
         frame_width, frame_height = 640, 360
         st.success(f"Стрим подключен: {frame_width}x{frame_height}")
@@ -90,6 +89,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             "quiet",
             "-",
         ]
+        st.text(list_formats("https://www.youtube.com/watch?v=bYlEgU2tU5w"))
 
         pipe = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
 
