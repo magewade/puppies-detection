@@ -9,6 +9,7 @@ import subprocess
 import numpy as np
 import time
 import cv2  # добавлен импорт OpenCV
+import re
 
 model = YOLO("data/weights/best.pt")
 
@@ -50,15 +51,6 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
                     format_options.append((f"{format_id} - {ext} - {resolution} - {note}", format_id))
             return format_options
 
-    # 233 - mp4 - Default, low
-    # 234 - mp4 - Default, high
-    # 269 - mp4 -
-    # 229 - mp4 -
-    # 230 - mp4 -
-    # 231 - mp4 -
-    # 232 - mp4 -
-    # 270 - mp4 -
-
     youtube_url = "https://www.youtube.com/watch?v=bYlEgU2tU5w"
     available_formats = list_formats(youtube_url)
 
@@ -67,6 +59,13 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         options=available_formats,
         format_func=lambda x: x[0],  # показываем читабельную подпись
     )
+    
+    match = re.search(r"(\d+)x(\d+)", selected_format_label)
+    if match:
+        frame_width, frame_height = int(match.group(1)), int(match.group(2))
+    else:
+        st.warning("Не удалось извлечь размеры из выбранного формата. Установлены значения по умолчанию.")
+        frame_width, frame_height = 640, 360
 
     def get_stream_info(youtube_url, format_id):
         ydl_opts = {
@@ -89,8 +88,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         if not stream_url:
             st.error("Не удалось получить поток. Возможно, YouTube заблокировал доступ или не найден подходящий формат (m3u8).")
             st.stop()
-        # frame_width, frame_height = 1280, 720
-        frame_width, frame_height = 640, 360
+
         st.success(f"Стрим подключен: {frame_width}x{frame_height}")
 
         ffmpeg_cmd = [
