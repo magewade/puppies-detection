@@ -29,6 +29,16 @@ option = st.radio(
 # TODO
 
 if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
+    def get_stream_info(youtube_url, format_id):
+        ydl_opts = {
+            "quiet": True,
+            "format": format_id,
+            "noplaylist": False,
+        }
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(youtube_url, download=False)
+            return info["url"]
+        
     def get_stream_url(youtube_url, format_id):
         ydl_opts = {
             "quiet": True,
