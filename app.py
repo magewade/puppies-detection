@@ -8,6 +8,7 @@ import yt_dlp
 import imageio
 import imageio.v3 as iio
 import numpy as np
+import threading
 import time
 import cv2  # добавлен импорт OpenCV
 import re
