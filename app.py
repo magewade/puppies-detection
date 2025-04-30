@@ -130,13 +130,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         # Цикл обработки кадров с возможностью остановки
         while True:
             try:
-                # Чтение данных с потока
                 raw_frame = pipe.stdout.read(frame_size)
-                
-                # Если данных нет, значит поток завершён
-                if not raw_frame:
-                    st.warning("🚫 Поток завершён или прерван")
-                    break
 
                 # Преобразуем байты в изображение
                 frame = np.frombuffer(raw_frame, dtype=np.uint8)
