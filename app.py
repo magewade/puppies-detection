@@ -63,9 +63,10 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     match = re.search(r"(\d+)x(\d+)", selected_format_label)
     if match:
         frame_width, frame_height = int(match.group(1)), int(match.group(2))
+        st.info(f"📐 Извлечены размеры из выбранного формата: {frame_width}x{frame_height}")
     else:
-        st.warning("Не удалось извлечь размеры из выбранного формата. Установлены значения по умолчанию.")
-        frame_width, frame_height = 100, 100
+        st.warning(f"⚠️ Не удалось извлечь размеры из строки '{selected_format_label}', используем значения по умолчанию")
+        frame_width, frame_height = 640, 360
 
     def get_stream_info(youtube_url, format_id):
         ydl_opts = {
@@ -86,10 +87,11 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     if start_button:
         stream_url = get_stream_info(youtube_url, selected_format_id)
         if not stream_url:
-            st.error("Не удалось получить поток. Возможно, YouTube заблокировал доступ или не найден подходящий формат (m3u8).")
+            st.error("❌ Не удалось получить ссылку на поток.")
             st.stop()
 
-        st.success(f"Стрим подключен: {frame_width}x{frame_height}")
+        st.success(f"✅ Стрим подключен\n📺 Ссылка на поток: {stream_url}\n📐 Размеры: {frame_width}x{frame_height}")
+
 
         ffmpeg_cmd = [
             "ffmpeg",
