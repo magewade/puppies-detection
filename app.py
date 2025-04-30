@@ -28,6 +28,7 @@ option = st.radio(
 # TODO
 
 if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
+
     st.subheader("Инференс YouTube трансляции 🎥")
 
     st.info(
@@ -35,6 +36,25 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     )
 
     st.video("https://www.youtube.com/watch?v=bYlEgU2tU5w")
+
+    def get_stream_url_and_headers(youtube_url, format_id):
+        ydl_opts = {
+            'format': format_id,
+            'quiet': True,
+            'noplaylist': True,
+            'forceurl': True,
+            'forcejson': True,
+            'simulate': True,
+            'addheader': ['Referer: https://www.youtube.com'],
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(youtube_url, download=False)
+            stream_url = info['url']
+            headers_dict = info.get('http_headers', {})
+            headers = ''.join(f"{k}: {v}\r\n" for k, v in headers_dict.items())
+
+        return stream_url, headers
 
     def list_formats(youtube_url):
         ydl_opts = {"quiet": True}
@@ -60,7 +80,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     selected_format_label, selected_format_id = st.selectbox(
         "Выбери формат видео для инференса",
         options=available_formats,
-        format_func=lambda x: x[0],  # показываем читабельную подпись
+        format_func=lambda x: x[0],  
     )
 
     match = re.search(r"(\d+)x(\d+)", selected_format_label)
@@ -68,7 +88,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         frame_width, frame_height = int(match.group(1)), int(match.group(2))
     else:
         st.warning(
-            f"⚠️ Не удалось извлечь размеры из строки '{selected_format_label}', используем значения по умолчанию"
+            f"⚠️ Не удалось извлечь размеры, используем значения по умолчанию"
         )
         frame_width, frame_height = 640, 360
 
@@ -89,14 +109,12 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     start_button = st.button("▶️ Начать инференс", key="start_button")
 
     if start_button:
-        stream_url = get_stream_info(youtube_url, selected_format_id)
-        if not stream_url:
-            st.error("❌ Не удалось получить ссылку на поток.")
-            st.stop()
+        stream_url, headers = get_stream_url_and_headers(
+            youtube_url, selected_format_id
+        )
 
         st.success(f"✅ Стрим подключен: {frame_width}x{frame_height}")
 
-        headers = "User-Agent: Mozilla/5.0\r\nReferer: https://www.youtube.com\r\n"
 
         ffmpeg_cmd = [
             "ffmpeg",
@@ -121,13 +139,10 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         frame_size = frame_width * frame_height * 3
         placeholder = st.empty()
 
-        # Цикл обработки кадров с возможностью остановки
-        # Check if stop button has already been created in session state
         if "stop_button_clicked" not in st.session_state:
             st.session_state.stop_button_clicked = False
 
         stop_button = st.button("⛔ Остановить", key="stop_button")
-        # Цикл обработки кадров с возможностью остановки
         while True:
             try:
                 raw_frame = pipe.stdout.read(frame_size)
@@ -147,7 +162,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
                     persist=True,
                     tracker="configs/puppy_tracker.yaml",
                     verbose=False,
-                    conf=0.4,
+                    conf=0.5,
                 )
 
                 # Отображаем аннотированный кадр
