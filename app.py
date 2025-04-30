@@ -53,7 +53,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     def get_stream_info(youtube_url):
         ydl_opts = {
             "quiet": True,
-            "format": "232",
+            "format": "270",
             "noplaylist": True,
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -162,7 +162,7 @@ elif option == "Как это работает 🔎":
     st.markdown("Вот как это выглядит в действии:")
 
     with st.spinner("Загружаем гифки..."):
-        time.sleep(2)  # задержка для эффекта
+        time.sleep(10)  # задержка для эффекта
 
     st.image(
         "data/images/animation_V1-0002.gif",
