@@ -65,7 +65,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         frame_width, frame_height = int(match.group(1)), int(match.group(2))
     else:
         st.warning("Не удалось извлечь размеры из выбранного формата. Установлены значения по умолчанию.")
-        frame_width, frame_height = 640, 360
+        frame_width, frame_height = 100, 100
 
     def get_stream_info(youtube_url, format_id):
         ydl_opts = {
