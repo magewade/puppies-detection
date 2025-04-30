@@ -29,7 +29,7 @@ option = st.radio(
 # TODO
 
 if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
-    def get_stream_info(youtube_url, format_id):
+    def get_stream_url(youtube_url, format_id):
         ydl_opts = {
             "quiet": True,
             "format": format_id,
@@ -39,19 +39,19 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             info = ydl.extract_info(youtube_url, download=False)
             return info["url"]
 
-    # Функция получения данных потока
     def process_stream(stream_url):
         try:
-            out, err = (
+            out, _ = (
                 ffmpeg.input(stream_url)
                 .output("pipe:1", format="rawvideo", pix_fmt="bgr24", s="640x360")
                 .run(capture_stdout=True, capture_stderr=True)
             )
-            print("Output:", out)
-            print("Error:", err)
+            return out
         except ffmpeg.Error as e:
-            print("FFmpeg Error:", e.stderr)
-            raise
+            # Показываем stderr прямо в Streamlit
+            st.error("FFmpeg error occurred:")
+            st.code(e.stderr.decode('utf8') if e.stderr else "No stderr", language="bash")
+            return None
 
     # Выбираем формат видео
     def list_formats(youtube_url):
