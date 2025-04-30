@@ -86,6 +86,9 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     st.info(
         "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает каждый кадр на CPU Streamlit"
     )
+    st.info(
+        "В разработке: Youtube пресекает рестрим потока на Streamlitфункция работает только локально"
+    )
 
     start_button = st.button("▶️ Начать инференс", key="start_button")
     if start_button:
@@ -95,37 +98,12 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             st.stop()
 
         st.success(f"✅ Стрим подключен: {frame_width}x{frame_height}")
-        cookie_string = (
-    "__Secure-1PAPISID=6D1jT1Y_QI4R1QCm/A1EK1Ctl9bl7SXtNB; "
-    "__Secure-1PSIDg=a000wAih01q3BD3fPEVFfl8BhlmLpxuOq5TZjxEYX2dcZOaEF5NW3b9WfRyb_uKHklYBtf1pzgACgYKAdsSARUSFQHGX2MiOcLKavf_VLxWIViugVlKZxoVAUF8yKoF0FHYRWaNKWF5LpiN4D7R0076; "
-    "__Secure-1PSIDCC=AKEyXzUBXKvGRBkRcoJEYVZ3S7olI44zaUnkwQrZCX-BdiO7pKBscjy6qpcu7iZ-bKqc-NGlc2M; "
-    "__Secure-1PSIDTS=sidts-CjIBjplskMjyHxTuSjNCGUqnWZhR6s-I9YEsrJA3jZq_sAAMgKhrq_5x4Jw8tnzZH6pZdRAA; "
-    "__Secure-3PAPISID=6D1jT1Y_QI4R1QCm/A1EK1Ctl9bl7SXtNB; "
-    "__Secure-3PSIDg=a000wAih01q3BD3fPEVFfl8BhlmLpxuOq5TZjxEYX2dcZOaEF5NW5jZmB1kwtadiibjL7GykewACgYKAfsSARUSFQHGX2Mied4Cx1Wa7NxuZZ0y9CfEvBoVAUF8yKruWLHbSKXWSZWQSPCS9Dhc0076; "
-    "__Secure-3PSIDCC=AKEyXzVQ7jpLQikFNPRzYDDICXsn5ISdSngfUS7FZQgzwvgoIDdGTdtbrjCh03B-IhB7IChzdJEV; "
-    "__Secure-3PSIDTS=sidts-CjIBjplskMjyHxTuSjNCGUqnWZhR6s-I9YEsrJA3jZq_sAAMgKhrq_5x4Jw8tnzZH6pZdRAA; "
-    "__Secure-ROLLOUT_TOKEN=CP3xv8Go5cfQOBCdjLzr9I-KAxjI5MmO0f-MAw%3D%3D; "
-    "APISID=DMlYB94bxazwE9kE/AsmhfyHZCzPzo9035; "
-    "HSID=A74mCK8CcoZ8-rk3T; "
-    "LOGIN_INFO=AFmmF2swRQIgSzr9nTSIPIaGdy0XEzJm3Npcmk8jYT5KiYs49rDTIdcCIQCIMYliWCXfEEJF3z-C4pnO74EYr30hkALF1I2Zixtk1A:QUQ3MjNmdzg3TkRSQkl2UFNZTHN1SlZPV2o3X0hnYTVmRlF5REpMai1fbHJYVzhCSENEaGs2UTdXdkZua0xxak5WdWZoYmpmaVFERFNHZ050a1dsbFhrclJqenA4VDBrZnNCdWRpV3RvUnUzSkpWWmRqaG5xaFNTVXgyUFZJT1BhTVk0Vlh4R3RPWmQ5VGJGNUg0MmN3eVc3MU5Xc2g3VlFR; "
-    "PREF=tz=Asia.Bishkek&f7=18150&f5=20000&f4=4000000; "
-    "SAPISID=6D1jT1Y_QI4R1QCm/A1EK1Ctl9bl7SXtNB; "
-    "SID=g.a000wAih01q3BD3fPEVFfl8BhlmLpxuOq5TZjxEYX2dcZOaEF5NWLZRLOeqa-vNtSh4eQyNC3AACgYKAbQSARUSFQHGX2Mih7f81_5FW1a47_FxYtLwvRoVAUF8yKpmtG2FFxOgjc1tQ-4IQlbx0076; "
-    "SIDCC=AKEyXzXh_P43Iq_7l-JmD2ZstO7ex2Hblkz6z0kmaYEjoM1KA3JeVCbVZZmRQljBCwE7ZBQ53e_P; "
-    "SSID=A1XRxK18714-KoHt8; "
-    "ST-183jmdn=session_logininfo=AFmmF2swRQIgSzr9nTSIPIaGdy0XEzJm3Npcmk8jYT5KiYs49rDTIdcCIQCIMYliWCXfEEJF3z-C4pnO74EYr30hkALF1I2Zixtk1A%3AQUQ3MjNmdzg3TkRSQkl2UFNZTHN1SlZPV2o3X0hnYTVmRlF5REpMai1fbHJYVzhCSENEaGs2UTdXdkZua0xxak5WdWZoYmpmaVFERFNHZ050a1dsbFhrclJqenA4VDBrZnNCdWRpV3RvUnUzSkpWWmRqaG5xaFNTVXgyUFZJT1BhTVk0Vlh4R3RPWmQ5VGJGNUg0MmN3eVc3MU5Xc2g3VlFR; "
-    "VISITOR_INFO1_LIVE=dYgVE5BRlUw; "
-    "VISITOR_PRIVACY_METADATA=CgJLRxIEGgAgbQ%3D%3D; "
-    "YSC=q8uqGdhS92Q"
-)
-
 
         headers = (
     f"User-Agent: Mozilla/5.0\r\n"
     f"Referer: https://www.youtube.com\r\n"
-    f"Cookie: {cookie_string}\r\n"
+    # f"Cookie: {cookie_string}\r\n"
 )
-
 
         ffmpeg_cmd = [
             "ffmpeg",
@@ -149,7 +127,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
         frame_size = frame_width * frame_height * 3
         placeholder = st.empty()
-        
+
         if "stop_button_clicked" not in st.session_state:
             st.session_state.stop_button_clicked = False
 
