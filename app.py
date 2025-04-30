@@ -5,13 +5,11 @@ import tempfile
 import shutil
 import uuid
 import yt_dlp
-import imageio
-import imageio.v3 as iio
 import numpy as np
-import threading
 import time
 import cv2  # добавлен импорт OpenCV
-import re
+import ffmpeg
+import io
 
 model = YOLO("data/weights/best.pt")
 
@@ -29,7 +27,6 @@ option = st.radio(
 # TODO
 
 if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
-    # Функция для получения ссылки на поток из YouTube
     def get_stream_info(youtube_url, format_id):
         ydl_opts = {
             "quiet": True,
@@ -48,7 +45,6 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             formats = info.get("formats", [])
             format_options = []
             for f in formats:
-                # Пропускаем не-видео форматы
                 if f.get("vcodec") != "none":
                     format_id = f.get("format_id")
                     ext = f.get("ext")
@@ -76,12 +72,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     )
 
     # Получаем размеры из выбранного формата
-    match = re.search(r"(\d+)x(\d+)", selected_format_label)
-    if match:
-        frame_width, frame_height = int(match.group(1)), int(match.group(2))
-    else:
-        st.warning(f"⚠️ Не удалось извлечь размеры из строки '{selected_format_label}', используем значения по умолчанию")
-        frame_width, frame_height = 640, 360
+    frame_width, frame_height = 640, 360
 
     # Инференс потока
     st.info(
@@ -97,53 +88,39 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             st.error("❌ Не удалось получить ссылку на поток.")
             st.stop()
 
-        st.success(f"✅ Стрим подключен: {frame_width}x{frame_height}")
+        st.success(f"✅ Стрим подключен\nРазмеры (по данным): {frame_width}x{frame_height}")
         st.code(stream_url, language="bash")
 
         # Инференс потока
         placeholder = st.empty()
 
         # Кнопка остановки
-        if "stop_button_clicked" not in st.session_state:
-            st.session_state.stop_button_clicked = False
-
         stop_button = st.button("⛔ Остановить", key="stop_button")
-
-        cap = cv2.VideoCapture(stream_url)
-
-        if not cap.isOpened():
-            st.error("🚫 Не удалось открыть поток. Возможно, он завершён или нестабилен.")
-            st.stop()
-
-        # Попробуем получить реальные размеры
-        actual_width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH)) or frame_width
-        actual_height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT)) or frame_height
-        st.info(f"📺 Детектировано: {actual_width}x{actual_height}")
 
         while True:
             if stop_button:
-                st.session_state.stop_button_clicked = True
-                st.info("⛔ Остановка инференса...")
                 break
 
-            if st.session_state.stop_button_clicked:
-                break
+            # Используем ffmpeg для получения потока
+            out, _ = (
+                ffmpeg.input(stream_url)
+                .output("pipe:1", format="rawvideo", pix_fmt="bgr24", s=f"{frame_width}x{frame_height}")
+                .run(capture_stdout=True, capture_stderr=True)
+            )
 
-            ret, frame = cap.read()
-            if not ret or frame is None:
+            # Преобразуем байты в изображение
+            nparr = np.frombuffer(out, np.uint8)
+            frame = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+
+            if frame is None:
                 st.warning("🚫 Поток завершён или прерван")
                 break
-
-            # Преобразуем размер под модель, если нужно
-            frame = cv2.resize(frame, (frame_width, frame_height))
 
             # Отображение обработанного кадра
             placeholder.image(frame, channels="BGR", use_container_width=True)
 
             # Добавляем задержку для предотвращения излишней нагрузки
             time.sleep(0.1)
-
-        cap.release()
 
 # TODO
 
