@@ -134,14 +134,13 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
                 # Преобразуем байты в изображение
                 frame = np.frombuffer(raw_frame, dtype=np.uint8)
-                
+
                 # Если размер кадра некорректный, пропускаем его
                 if frame.size != frame_size:
                     continue
 
                 # Меняем форму кадра для обработки
                 frame = frame.reshape((frame_height, frame_width, 3))
-
                 # Инференс на кадре
                 results = model.track(
                     source=frame,
@@ -155,15 +154,10 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
                 annotated = results[0].plot() if results else frame
                 placeholder.image(annotated, channels="BGR", use_container_width=True)
 
-                # Задержка, чтобы не нагружать сервер
-                time.sleep(0.1)
-
             except Exception as e:
                 # Обработка ошибок потока
                 st.error(f"❌ Ошибка при обработке потока: {e}")
                 break
-
-
 
         pipe.terminate()
 
