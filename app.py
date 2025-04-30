@@ -38,7 +38,7 @@ import yt_dlp
 
 if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     # Прокси по умолчанию
-    proxy_url = "http://142.93.202.130:3128"
+    proxy_url = "http://103.75.119.185:80"
 
     # Получение доступных форматов
     def list_formats(youtube_url):
