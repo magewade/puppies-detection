@@ -78,6 +78,16 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             info = ydl.extract_info(youtube_url, download=False)
             return info["url"]
 
+    def get_m3u8_stream_url(youtube_url):
+        ydl_opts = {"quiet": True}
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(youtube_url, download=False)
+            formats = info.get("formats", [])
+            for f in formats:
+                if f.get("protocol") == "m3u8":
+                    return f["url"]  # вот это ffmpeg может!
+        return None
+
     st.info(
         "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает каждый кадр на CPU Streamlit"
     )
@@ -85,7 +95,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
     start_button = st.button("▶️ Начать инференс", key="start_button")
 
     if start_button:
-        stream_url = get_stream_info(youtube_url, selected_format_id)
+        stream_url = get_m3u8_stream_url(youtube_url)
         # frame_width, frame_height = 1280, 720
         frame_width, frame_height = 640, 360
         st.success(f"Стрим подключен: {frame_width}x{frame_height}")
@@ -106,7 +116,6 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             "quiet",
             "-",
         ]
-        st.write(list_formats("https://www.youtube.com/watch?v=bYlEgU2tU5w"))
 
         pipe = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
 
