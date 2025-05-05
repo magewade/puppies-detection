@@ -89,75 +89,75 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         "⚠️ В разработке: Youtube пресекает рестрим потока на Streamlit, функция работает **только локально**"
     )
 
-    start_button = st.button("▶️ Начать инференс", key="start_button")
-    if start_button:
-        stream_url = get_stream_info(youtube_url, selected_format_id)
-        if not stream_url:
-            st.error("❌ Не удалось получить ссылку на поток.")
-            st.stop()
+    # start_button = st.button("▶️ Начать инференс", key="start_button")
+    # if start_button:
+    #     stream_url = get_stream_info(youtube_url, selected_format_id)
+    #     if not stream_url:
+    #         st.error("❌ Не удалось получить ссылку на поток.")
+    #         st.stop()
 
-        st.success(f"✅ Стрим подключен: {frame_width}x{frame_height}")
+    #     st.success(f"✅ Стрим подключен: {frame_width}x{frame_height}")
 
 
-        ffmpeg_cmd = [
-            "ffmpeg",
-            "-headers",
-            "-i",
-            stream_url,
-            "-vf",
-            f"scale={frame_width}:{frame_height}",
-            "-f",
-            "image2pipe",
-            "-pix_fmt",
-            "bgr24",
-            "-vcodec",
-            "rawvideo",
-            "-loglevel",
-            "quiet",
-            "-",
-        ]
+    #     ffmpeg_cmd = [
+    #         "ffmpeg",
+    #         "-headers",
+    #         "-i",
+    #         stream_url,
+    #         "-vf",
+    #         f"scale={frame_width}:{frame_height}",
+    #         "-f",
+    #         "image2pipe",
+    #         "-pix_fmt",
+    #         "bgr24",
+    #         "-vcodec",
+    #         "rawvideo",
+    #         "-loglevel",
+    #         "quiet",
+    #         "-",
+    #     ]
 
-        pipe = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
+    #     pipe = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
 
-        frame_size = frame_width * frame_height * 3
-        placeholder = st.empty()
+    #     frame_size = frame_width * frame_height * 3
+    #     placeholder = st.empty()
 
-        if "stop_button_clicked" not in st.session_state:
-            st.session_state.stop_button_clicked = False
+    #     if "stop_button_clicked" not in st.session_state:
+    #         st.session_state.stop_button_clicked = False
 
-        stop_button = st.button("⛔ Остановить", key="stop_button")
-        while True:
-            try:
-                raw_frame = pipe.stdout.read(frame_size)
+    #     stop_button = st.button("⛔ Остановить", key="stop_button")
+    #     while True:
+    #         try:
+    #             raw_frame = pipe.stdout.read(frame_size)
 
-                # Преобразуем байты в изображение
-                frame = np.frombuffer(raw_frame, dtype=np.uint8)
+    #             # Преобразуем байты в изображение
+    #             frame = np.frombuffer(raw_frame, dtype=np.uint8)
 
-                # Если размер кадра некорректный, пропускаем его
-                if frame.size != frame_size:
-                    continue
+    #             # Если размер кадра некорректный, пропускаем его
+    #             if frame.size != frame_size:
+    #                 continue
 
-                # Меняем форму кадра для обработки
-                frame = frame.reshape((frame_height, frame_width, 3))
-                # Инференс на кадре
-                results = model.track(
-                    source=frame,
-                    persist=True,
-                    tracker="configs/puppy_tracker.yaml",
-                    verbose=False,
-                    conf=0.4,
-                )
+    #             # Меняем форму кадра для обработки
+    #             frame = frame.reshape((frame_height, frame_width, 3))
+    #             # Инференс на кадре
+    #             results = model.track(
+    #                 source=frame,
+    #                 persist=True,
+    #                 tracker="configs/puppy_tracker.yaml",
+    #                 verbose=False,
+    #                 conf=0.4,
+    #             )
 
-                # Отображаем аннотированный кадр
-                annotated = results[0].plot() if results else frame
-                placeholder.image(annotated, channels="BGR", use_container_width=True)
+    #             # Отображаем аннотированный кадр
+    #             annotated = results[0].plot() if results else frame
+    #             placeholder.image(annotated, channels="BGR", use_container_width=True)
 
-            except Exception as e:
-                # Обработка ошибок потока
-                st.error(f"❌ Ошибка при обработке потока: {e}")
-                break
+    #         except Exception as e:
+    #             # Обработка ошибок потока
+    #             st.error(f"❌ Ошибка при обработке потока: {e}")
+    #             break
 
-        pipe.terminate()
+    #     pipe.terminate()
 
 
 # TODO
