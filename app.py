@@ -76,10 +76,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         ydl_opts = {
             "quiet": True,
             "format": format_id,
-            "noplaylist": False,
-            "cookiesfrombrowser": ("chrome",),
-            "cookiefile": None,
-            "http_headers": {"User-Agent": "Mozilla/5.0"},
+            "noplaylist": True
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
@@ -89,7 +86,7 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
         "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает каждый кадр на CPU Streamlit"
     )
     st.info(
-        "⚠️ В разработке: Youtube пресекает рестрим потока на Streamlit, функция работает только локально"
+        "⚠️ В разработке: Youtube пресекает рестрим потока на Streamlit, функция работает **только локально**"
     )
 
     start_button = st.button("▶️ Начать инференс", key="start_button")
@@ -101,17 +98,10 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
         st.success(f"✅ Стрим подключен: {frame_width}x{frame_height}")
 
-        headers = {
-            "User-Agent": "Mozilla/5.0",
-            "Referer": "https://www.youtube.com",
-            # Убедитесь, что добавлены актуальные куки:
-            # "Cookie": cookie_string,
-        }
 
         ffmpeg_cmd = [
             "ffmpeg",
             "-headers",
-            f"User-Agent: {headers['User-Agent']}\r\nReferer: {headers['Referer']}",
             "-i",
             stream_url,
             "-vf",
