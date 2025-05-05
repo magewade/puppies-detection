@@ -10,6 +10,7 @@ import time
 import cv2  # добавлен импорт OpenCV
 import subprocess
 import re 
+import browser_cookie3
 
 
 model = YOLO("data/weights/best.pt")
@@ -76,6 +77,9 @@ if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
             "quiet": True,
             "format": format_id,
             "noplaylist": False,
+            "cookiesfrombrowser": ("chrome",),
+            "cookiefile": None,
+            "http_headers": {"User-Agent": "Mozilla/5.0"},
         }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(youtube_url, download=False)
