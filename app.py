@@ -10,7 +10,6 @@ import time
 import cv2  # добавлен импорт OpenCV
 import subprocess
 import re 
-import browser_cookie3
 
 
 model = YOLO("data/weights/best.pt")
@@ -20,150 +19,150 @@ st.title("Трекинг щенков с YOLOv8 🐶")
 option = st.radio(
     "Выберите, что вы хотите сделать:",
     (
-        "Как это работает 🔎",
-        "Инференсим видео 🐾",
-        "Инференсим трансляцию с YouTube 🐕‍🦺",
+        "Как это работает 🐕‍🦺",
+        "Инференсим видео 🐾"
+        # "Инференсим трансляцию с YouTube 🐕‍🦺",
     ),
 )
 
 # TODO
 
-if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
+# if option == "Инференсим трансляцию с YouTube 🐕‍🦺":
 
-    st.subheader("Инференс YouTube трансляции 🎥")
+#     st.subheader("Инференс YouTube трансляции 🎥")
 
-    st.info(
-        "Это прямая трансляция, щенки могут устраивать совсем уж инфернальный хаос, спать или быть не в кадре :)"
-    )
+#     st.info(
+#         "Это прямая трансляция, щенки могут устраивать совсем уж инфернальный хаос, спать или быть не в кадре :)"
+#     )
 
-    st.video("https://www.youtube.com/watch?v=bYlEgU2tU5w")
+#     st.video("https://www.youtube.com/watch?v=bYlEgU2tU5w")
 
-    def list_formats(youtube_url):
-        ydl_opts = {"quiet": True}
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(youtube_url, download=False)
-            formats = info.get("formats", [])
-            format_options = []
-            for f in formats:
-                # Пропускаем не-видео форматы
-                if f.get("vcodec") != "none":
-                    format_id = f.get("format_id")
-                    ext = f.get("ext")
-                    note = f.get("format_note", "")
-                    resolution = f.get("resolution") or ""
-                    format_options.append(
-                        (f"{format_id} - {ext} - {resolution} - {note}", format_id)
-                    )
-            return format_options
+#     st.info(
+#         "⚠️ В разработке: Youtube пресекает рестрим потока на Streamlit, функция работает **только локально**"
+#     )
 
-    youtube_url = "https://www.youtube.com/watch?v=bYlEgU2tU5w"
-    available_formats = list_formats(youtube_url)
+#     def list_formats(youtube_url):
+#         ydl_opts = {"quiet": True}
+#         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+#             info = ydl.extract_info(youtube_url, download=False)
+#             formats = info.get("formats", [])
+#             format_options = []
+#             for f in formats:
+#                 # Пропускаем не-видео форматы
+#                 if f.get("vcodec") != "none":
+#                     format_id = f.get("format_id")
+#                     ext = f.get("ext")
+#                     note = f.get("format_note", "")
+#                     resolution = f.get("resolution") or ""
+#                     format_options.append(
+#                         (f"{format_id} - {ext} - {resolution} - {note}", format_id)
+#                     )
+#             return format_options
 
-    selected_format_label, selected_format_id = st.selectbox(
-        "Выберите формат видео для инференса",
-        options=available_formats,
-        format_func=lambda x: x[0],
-    )
+#     youtube_url = "https://www.youtube.com/watch?v=bYlEgU2tU5w"
+#     available_formats = list_formats(youtube_url)
 
-    match = re.search(r"(\d+)x(\d+)", selected_format_label)
-    if match:
-        frame_width, frame_height = int(match.group(1)), int(match.group(2))
-    else:
-        st.warning(f"⚠️ Не удалось извлечь размеры, используем значения по умолчанию")
-        frame_width, frame_height = 640, 360
+#     selected_format_label, selected_format_id = st.selectbox(
+#         "Выберите формат видео для инференса",
+#         options=available_formats,
+#         format_func=lambda x: x[0],
+#     )
 
-    def get_stream_info(youtube_url, format_id):
-        ydl_opts = {
-            "quiet": True,
-            "format": format_id,
-            "noplaylist": True
-        }
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(youtube_url, download=False)
-            return info["url"]
+#     match = re.search(r"(\d+)x(\d+)", selected_format_label)
+#     if match:
+#         frame_width, frame_height = int(match.group(1)), int(match.group(2))
+#     else:
+#         st.warning(f"⚠️ Не удалось извлечь размеры, используем значения по умолчанию")
+#         frame_width, frame_height = 640, 360
 
-    st.info(
-        "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает каждый кадр на CPU Streamlit"
-    )
-    st.info(
-        "⚠️ В разработке: Youtube пресекает рестрим потока на Streamlit, функция работает **только локально**"
-    )
+#     def get_stream_info(youtube_url, format_id):
+#         ydl_opts = {
+#             "quiet": True,
+#             "format": format_id,
+#             "noplaylist": True
+#         }
+#         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+#             info = ydl.extract_info(youtube_url, download=False)
+#             return info["url"]
 
-    # start_button = st.button("▶️ Начать инференс", key="start_button")
-    # if start_button:
-    #     stream_url = get_stream_info(youtube_url, selected_format_id)
-    #     if not stream_url:
-    #         st.error("❌ Не удалось получить ссылку на поток.")
-    #         st.stop()
+#     st.info(
+#         "Инференс трансляции происходит с задержкой, так как YOLO обрабатывает каждый кадр на CPU Streamlit"
+#     )
 
-    #     st.success(f"✅ Стрим подключен: {frame_width}x{frame_height}")
+#     start_button = st.button("▶️ Начать инференс", key="start_button")
+#     if start_button:
+#         stream_url = get_stream_info(youtube_url, selected_format_id)
+#         if not stream_url:
+#             st.error("❌ Не удалось получить ссылку на поток.")
+#             st.stop()
 
+#         st.success(f"✅ Стрим подключен: {frame_width}x{frame_height}")
 
-    #     ffmpeg_cmd = [
-    #         "ffmpeg",
-    #         "-headers",
-    #         "-i",
-    #         stream_url,
-    #         "-vf",
-    #         f"scale={frame_width}:{frame_height}",
-    #         "-f",
-    #         "image2pipe",
-    #         "-pix_fmt",
-    #         "bgr24",
-    #         "-vcodec",
-    #         "rawvideo",
-    #         "-loglevel",
-    #         "quiet",
-    #         "-",
-    #     ]
+#         ffmpeg_cmd = [
+#             "ffmpeg",
+#             "-headers",
+#             "-i",
+#             stream_url,
+#             "-vf",
+#             f"scale={frame_width}:{frame_height}",
+#             "-f",
+#             "image2pipe",
+#             "-pix_fmt",
+#             "bgr24",
+#             "-vcodec",
+#             "rawvideo",
+#             "-loglevel",
+#             "quiet",
+#             "-",
+#         ]
 
-    #     pipe = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
+#         pipe = subprocess.Popen(ffmpeg_cmd, stdout=subprocess.PIPE)
 
-    #     frame_size = frame_width * frame_height * 3
-    #     placeholder = st.empty()
+#         frame_size = frame_width * frame_height * 3
+#         placeholder = st.empty()
 
-    #     if "stop_button_clicked" not in st.session_state:
-    #         st.session_state.stop_button_clicked = False
+#         if "stop_button_clicked" not in st.session_state:
+#             st.session_state.stop_button_clicked = False
 
-    #     stop_button = st.button("⛔ Остановить", key="stop_button")
-    #     while True:
-    #         try:
-    #             raw_frame = pipe.stdout.read(frame_size)
+#         stop_button = st.button("⛔ Остановить", key="stop_button")
+#         while True:
+#             try:
+#                 raw_frame = pipe.stdout.read(frame_size)
 
-    #             # Преобразуем байты в изображение
-    #             frame = np.frombuffer(raw_frame, dtype=np.uint8)
+#                 # Преобразуем байты в изображение
+#                 frame = np.frombuffer(raw_frame, dtype=np.uint8)
 
-    #             # Если размер кадра некорректный, пропускаем его
-    #             if frame.size != frame_size:
-    #                 continue
+#                 # Если размер кадра некорректный, пропускаем его
+#                 if frame.size != frame_size:
+#                     continue
 
-    #             # Меняем форму кадра для обработки
-    #             frame = frame.reshape((frame_height, frame_width, 3))
-    #             # Инференс на кадре
-    #             results = model.track(
-    #                 source=frame,
-    #                 persist=True,
-    #                 tracker="configs/puppy_tracker.yaml",
-    #                 verbose=False,
-    #                 conf=0.4,
-    #             )
+#                 # Меняем форму кадра для обработки
+#                 frame = frame.reshape((frame_height, frame_width, 3))
+#                 # Инференс на кадре
+#                 results = model.track(
+#                     source=frame,
+#                     persist=True,
+#                     tracker="configs/puppy_tracker.yaml",
+#                     verbose=False,
+#                     conf=0.4,
+#                 )
 
-    #             # Отображаем аннотированный кадр
-    #             annotated = results[0].plot() if results else frame
-    #             placeholder.image(annotated, channels="BGR", use_container_width=True)
+#                 # Отображаем аннотированный кадр
+#                 annotated = results[0].plot() if results else frame
+#                 placeholder.image(annotated, channels="BGR", use_container_width=True)
 
-    #         except Exception as e:
-    #             # Обработка ошибок потока
-    #             st.error(f"❌ Ошибка при обработке потока: {e}")
-    #             break
+#             except Exception as e:
+#                 # Обработка ошибок потока
+#                 st.error(f"❌ Ошибка при обработке потока: {e}")
+#                 break
 
-    #     pipe.terminate()
+#         pipe.terminate()
 
 
 # TODO
 
 
-elif option == "Как это работает 🔎":
+if option == "Как это работает 🐕‍🦺":
     st.subheader("Как работает модель 🚀")
 
     st.markdown(
@@ -209,6 +208,7 @@ elif option == "Как это работает 🔎":
     )
 
     st.info("Модель: YOLOv8, трекер: BoT-SORT, обучение на кастомной выборке")
+    st.video("https://www.youtube.com/watch?v=bYlEgU2tU5w")
 
 
 elif option == "Инференсим видео 🐾":
